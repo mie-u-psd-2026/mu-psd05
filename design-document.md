@@ -116,9 +116,9 @@ APIエンドポイント一覧
 | 5   | `/api/summary-jobs/{jobId}` | GET      | 処理状況・結果を取得する      | ジョブID        | 処理状況・結果 |
 
 ### APIについて
-音声文字起こしAPI
-POST/api/transcriptions
-→音声ファイルを受け取り、音声認識によってテキストへ変換する
+音声文字起こしAPI <br>
+POST/api/transcriptions <br>
+→音声ファイルを受け取り、音声認識によってテキストへ変換する <br>
 
 -入力：音声データはJSONではなく、multipart/form-data を想定
 | パラメータ | 型 | 必須 | 内容 |
@@ -137,9 +137,9 @@ POST/api/transcriptions
 }
 ```
 
-要約形式取得API
-GET/api/summary-templates
-→ユーザーが選択可能な要約形式を取得する
+要約形式取得API <br>
+GET/api/summary-templates<br>
+→ユーザーが選択可能な要約形式を取得する<br>
 →箇条書き、会議議事録、要点3つ、短い要約etc...
 
 -入力なし
@@ -167,9 +167,9 @@ GET/api/summary-templates
 }
 ```
 
-要約生成API
-POST/api/summaries
-→文字起こしされたテキストとユーザーが選択した要約形式を受け取り、LLM等を利用して要約する
+要約生成API<br>
+POST/api/summaries<br>
+→文字起こしされたテキストとユーザーが選択した要約形式を受け取り、LLM等を利用して要約する<br>
 
 -入力JSON
 ```JSON
@@ -212,9 +212,9 @@ POST/api/summaries
 }
 ```
 
-一括処理API
-今回のシステムでは、このAPIを中心にすると設計しやすい(by chat GPT)
-POST/api/summary-jobs
+一括処理API<br>
+今回のシステムでは、このAPIを中心にすると設計しやすい(by chat GPT)<br>
+POST/api/summary-jobs<br>
 →音声ファイルのアップロードから、文字起こし、要約までを一括して実行するAPI
 
 -入力：multipart/form-data
@@ -225,8 +225,8 @@ POST/api/summary-jobs
 | language | String | △ | 音声言語 |
 
 例：
-audio: meeting.mp3
-templateId: meeting
+audio: meeting.mp3<br>
+templateId: meeting<br>
 language: ja
 
 -出力JSON：処理を非同期にする場合は、まずジョブIDを返す
@@ -239,7 +239,7 @@ language: ja
 ```
 その後、GET/api/summaries-jobs/{jobID} で結果を取得する
 
-処理状況・結果取得API
+処理状況・結果取得API<br>
 GET/api/summary-jobs/{jobID}
 
 -入力：URLパラメータ→ jobID=job_001
