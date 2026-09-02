@@ -72,3 +72,216 @@
 |4. フロント : R    |      |      |      |      |      |      |      |      |      |       |
 |5. 結合テスト:R & K|      |      |      |      |      |      |      |      |      |       |
 |6. 成果発表: R or K|      |      |      |      |      |      |      |      |      |       |
+
+API全体の処理フロー
+```text
+[フロントエンド]
+       │
+       │ 音声ファイル + 要約形式
+       ▼
+POST /api/summary-jobs
+       │
+       ▼
+[バックエンド]
+       │
+       ├─① 音声認識
+       │       ↓
+       │   文字起こしテキスト
+       │
+       ├─② 要約形式を確認
+       │       ↓
+       │   指定されたテンプレート
+       │
+       ├─③ LLMによる要約
+       │       ↓
+       │   要約結果
+       │
+       ▼
+GET /api/summary-jobs/{jobId}
+       │
+       ▼
+[フロントエンド]
+       │
+       ▼
+要約結果を画面に表示
+```
+
+APIエンドポイント一覧
+| No. | エンドポイント                     | HTTPメソッド | 機能                | 入力           | 出力      |
+| --- | --------------------------- | -------- | ----------------- | ------------ | ------- |
+| 1   | `/api/transcriptions`       | POST     | 音声ファイルを文字起こしする    | 音声ファイル       | 文字起こし結果 |
+| 2   | `/api/summary-templates`    | GET      | 利用可能な要約形式を取得する    | なし           | 要約形式一覧  |
+| 3   | `/api/summaries`            | POST     | 文字起こし結果を指定形式で要約する | 文字起こし結果・要約形式 | 要約結果    |
+| 4   | `/api/summary-jobs`         | POST     | 文字起こし～要約までを一括実行する | 音声ファイル・要約形式  | 処理結果    |
+| 5   | `/api/summary-jobs/{jobId}` | GET      | 処理状況・結果を取得する      | ジョブID        | 処理状況・結果 |
+
+### APIについて
+音声文字起こしAPI
+POST/api/transcriptions
+→音声ファイルを受け取り、音声認識によってテキストへ変換する
+
+-入力：音声データはJSONではなく、multipart/form-data を想定
+| パラメータ | 型 | 必須 | 内容 |
+|-----------|----|------|------|
+| audio | File | 〇 | 音声ファイル | 
+| language | String | △ | 音声の言語 ex:ja |
+
+-出力JSON
+```JSON
+{
+  "transcriptionId": "tr_001",
+  "text": "本日の会議では、新商品の開発スケジュールについて確認しました。",
+  "language": "ja",
+  "duration": 125.4,
+  "createdAt": "2026-09-02T13:00:00+09:00"
+}
+```
+
+要約形式取得API
+GET/api/summary-templates
+→ユーザーが選択可能な要約形式を取得する
+→箇条書き、会議議事録、要点3つ、短い要約etc...
+
+-入力なし
+
+-出力JSON
+```JSON
+{
+  "templates": [
+    {
+      "id": "bullet",
+      "name": "箇条書き",
+      "description": "内容を重要なポイントごとに箇条書きで整理します。"
+    },
+    {
+      "id": "meeting",
+      "name": "会議議事録",
+      "description": "会議の概要、決定事項、課題、TODOを整理します。"
+    },
+    {
+      "id": "three-points",
+      "name": "要点3つ",
+      "description": "内容を特に重要な3つのポイントにまとめます。"
+    }
+  ]
+}
+```
+
+要約生成API
+POST/api/summaries
+→文字起こしされたテキストとユーザーが選択した要約形式を受け取り、LLM等を利用して要約する
+
+-入力JSON
+```JSON
+{
+  "transcriptionId": "tr_001",
+  "templateId": "meeting"
+}
+```
+または、文字起こし結果を直接渡す設計なら、
+```JSON
+{
+  "text": "本日の会議では、新商品の開発スケジュールについて確認しました。",
+  "templateId": "meeting"
+}
+```
+
+-出力JSON
+```JSON
+{
+  "summaryId": "sum_001",
+  "templateId": "meeting",
+  "templateName": "会議議事録",
+  "summary": {
+    "overview": "新商品の開発スケジュールについて確認した。",
+    "decisions": [
+      "9月末までに試作品を完成させる。"
+    ],
+    "issues": [
+      "開発担当者の人員が不足している。"
+    ],
+    "todos": [
+      {
+        "task": "追加の開発担当者を検討する",
+        "assignee": "田中",
+        "deadline": "2026-09-10"
+      }
+    ]
+  },
+  "createdAt": "2026-09-02T13:05:00+09:00"
+}
+```
+
+一括処理API
+今回のシステムでは、このAPIを中心にすると設計しやすい(by chat GPT)
+POST/api/summary-jobs
+→音声ファイルのアップロードから、文字起こし、要約までを一括して実行するAPI
+
+-入力：multipart/form-data
+| パラメータ | 型 | 必須 | 内容 |
+|------------|----|-----|-----|
+| audio | File | 〇 | 音声ファイル |
+| templateId | String | 〇 | 使用する要約形式 |
+| language | String | △ | 音声言語 |
+
+例：
+audio: meeting.mp3
+templateId: meeting
+language: ja
+
+-出力JSON：処理を非同期にする場合は、まずジョブIDを返す
+```JSON
+{
+  "jobId": "job_001",
+  "status": "processing",
+  "createdAt": "2026-09-02T13:10:00+09:00"
+}
+```
+その後、GET/api/summaries-jobs/{jobID} で結果を取得する
+
+処理状況・結果取得API
+GET/api/summary-jobs/{jobID}
+
+-入力：URLパラメータ→ jobID=job_001
+
+-処理中の出力
+```JSON
+{
+  "jobId": "job_001",
+  "status": "processing",
+  "progress": 60
+}
+```
+
+-処理完了時の出力
+```JSON
+{
+  "jobId": "job_001",
+  "status": "completed",
+  "progress": 100,
+  "transcription": {
+    "text": "本日の会議では、新商品の開発スケジュールについて確認しました。"
+  },
+  "summary": {
+    "templateId": "meeting",
+    "templateName": "会議議事録",
+    "content": {
+      "overview": "新商品の開発スケジュールについて確認した。",
+      "decisions": [
+        "9月末までに試作品を完成させる。"
+      ],
+      "issues": [
+        "開発担当者の人員が不足している。"
+      ],
+      "todos": [
+        {
+          "task": "追加の開発担当者を検討する",
+          "assignee": "田中",
+          "deadline": "2026-09-10"
+        }
+      ]
+    }
+  },
+  "completedAt": "2026-09-02T13:12:00+09:00"
+}
+```
