@@ -28,7 +28,7 @@
 
         <!-- 出力テキストエリア -->
         <h3>結果:</h3>
-        <div class="result-area p-3 border rounded" :class="{ 'alert alert-info': resultText && !resultText.startsWith('エラー:'), 'alert alert-danger': resultText.startsWith('エラー:') }">
+        <div class="result-area p-3 border rounded alert" :class="resultText.startsWith('エラー') ? 'alert-danger' : 'alert-info'">
             <pre style="white-space: pre-wrap;">{{ resultText }}</pre>
         </div>
     </div>
