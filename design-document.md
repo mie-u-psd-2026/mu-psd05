@@ -116,7 +116,7 @@ APIエンドポイント一覧
 | 5   | `/api/summary-jobs/{jobId}` | GET      | 処理状況・結果を取得する      | ジョブID        | 処理状況・結果 |
 
 ### APIについて
-音声文字起こしAPI <br>
+**音声文字起こしAPI** <br>
 POST/api/transcriptions <br>
 →音声ファイルを受け取り、音声認識によってテキストへ変換する <br>
 
@@ -137,7 +137,7 @@ POST/api/transcriptions <br>
 }
 ```
 
-要約形式取得API <br>
+**要約形式取得API** <br>
 GET/api/summary-templates<br>
 →ユーザーが選択可能な要約形式を取得する<br>
 →箇条書き、会議議事録、要点3つ、短い要約etc...
@@ -167,7 +167,7 @@ GET/api/summary-templates<br>
 }
 ```
 
-要約生成API<br>
+**要約生成API**<br>
 POST/api/summaries<br>
 →文字起こしされたテキストとユーザーが選択した要約形式を受け取り、LLM等を利用して要約する<br>
 
@@ -212,7 +212,7 @@ POST/api/summaries<br>
 }
 ```
 
-一括処理API<br>
+**一括処理API**<br>
 今回のシステムでは、このAPIを中心にすると設計しやすい(by chat GPT)<br>
 POST/api/summary-jobs<br>
 →音声ファイルのアップロードから、文字起こし、要約までを一括して実行するAPI
@@ -239,7 +239,7 @@ language: ja
 ```
 その後、GET/api/summaries-jobs/{jobID} で結果を取得する
 
-処理状況・結果取得API<br>
+**処理状況・結果取得API**<br>
 GET/api/summary-jobs/{jobID}
 
 -入力：URLパラメータ→ jobID=job_001
