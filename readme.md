@@ -2,24 +2,23 @@
 
 # 概要
 
-このアプリは Python とVue.jsを用いて作られた簡易的な生成AI活用アプリです。
+このアプリはPythonとVue.jsを用いて作られた簡易的な生成AI活用アプリです。
 
-- フロントエンドに、Vue.js CDN版を用いています。
-
-- バックエンドに、Python,FlaskとOpenAI APIを用いてローカル起動のOllamaを叩いています。
+- フロントエンドに、Vue.jsとBootstrap 5.3のCDN版を用いています。
+- バックエンドでは、Python, FlaskとOpenAI APIを用いてローカル起動のOllamaを叩いています。
 
 # 環境
-- Vscode
-- OpenCode
-- ollama
+
+- [Visual Studio Code](https://code.visualstudio.com/)
+- [OpenCode](https://opencode.ai/ja)
+- [Ollama](https://ollama.com/)
 
 # 開発ツールインストール
 
 - 管理者権限でコマンドプロンプトを起動します。
+- 以下のコマンドを実行し、`winget`で必要なソフトウェアを入手します。
 
-- 以下のコマンドを実行し、必要なソフトウェアを入手します。
-
-```
+```pwsh
 winget install --id Microsoft.VisualStudioCode -e --source winget --accept-package-agreements --accept-source-agreements
 winget install --id Python.Python.3.13 -e --source winget --accept-package-agreements --accept-source-agreements
 winget install --id SST.opencode -e --source winget --accept-package-agreements --accept-source-agreements
@@ -35,24 +34,28 @@ ollama pull qwen3.5:0.8b
 
 # 環境セットアップ
 
-- Python ライブラリインストール
+## Python ライブラリインストール
 
-  以下のコマンドでPythonの利用ライブラリをインストールします。
+以下のコマンドでPythonの利用ライブラリをインストールします。
 
-  ```
-  pip install -r requirements.txt
-  ```
+```bash
+pip install -r requirements.txt
+```
+
+あるいは、`uv`を使うこともできます。
+
+```sh
+uv venv
+uv install -r requirements.txt
+```
 
 # 実行方法
 
 - 以下のコマンドでサーバを起動します。
-
-  ```
+  ```sh
   python app.py
   ```
-
-- ブラウザで以下のURLにアクセスしてみてください。
-
+- ブラウザで[以下のURL](http://localhost:5000)にアクセスしてみてください。
   ```
   http://localhost:5000
   ```
@@ -61,28 +64,27 @@ ollama pull qwen3.5:0.8b
 
 ## ローカルの Ollama を使う場合（低性能だが利用制限なし）：
 
-- VsCode上でターミナルを開いて、以下を入力します。
-```
+- VSCode上でターミナルを開いて、以下を入力します。
+
+```sh
 ollama launch opencode --model=qwen3.5:0.8b
 ```
 
 ## クラウドの無料モデルを使う場合：(中性能、無料枠少ない)
 
-- VsCode上でターミナルを開いて、 opencode と入力します。
-
+- VSCode上でターミナルを開いて、 `opencode` と入力し、実行します。
 - /models と入力し、Free 表示のあるモデルを選択します。（例: DeepSeek V4 Flash Free）
 
 ## Google AI Studioを使う場合:(高性能、無料枠多い)
 
 - [Google AI Studio](https://aistudio.google.com/api-keys)を開きます。
-
 - APIキーを作成、を押下し、キー名を適当に命名し、プロジェクトを新規作成します。
 
 - APIキーが表示されるので、クリップボードにコピーしておきます。
 
 - [プロジェクト一覧](https://aistudio.google.com/projects)を開き、新規作成したプロジェクトが無料枠となっていることを確認します。
 
-- VsCode上でターミナルを開いて、 opencode と入力します。
+- VSCode上でターミナルを開いて、 `opencode` と入力します。
 
 - /connect と入力、プロバイダ一覧が表示されるので、Googleを選択、APIキーに先ほどのAPIキーを貼り付けます。
 
@@ -97,18 +99,13 @@ ollama launch opencode --model=qwen3.5:0.8b
 # 参考リンク
 
 - [Flask](https://flask.palletsprojects.com/en/stable/)
-
   - Python で書かれた Webアプリケーションサーバ
 
 - [Vue.js](https://vuejs.org/)
-
   - JavaScript製製のWebフロントエンド フレームワーク
 
 - [Vue.js Tutorial](https://ja.vuejs.org/tutorial/)
-
   - Vue.jsの入門用チュートリアル
-  
+
 - [OpenAI API](https://github.com/openai/openai-python)
-
   - Pythonから、OpenAI APIを呼び出すライブラリ
-
