@@ -1,6 +1,7 @@
 import { reactive } from 'vue';
 import * as storage from './services/storage.js';
 import * as api from './services/api.js';
+import * as audio from './services/audio.js';
 
 // 要約スタイル定数定義
 export const SUMMARY_STYLES = [
@@ -37,6 +38,12 @@ const store = reactive({
   isTranscribing: false,
   isRecording: false,
   recordSeconds: 0,
+  // 録音時間のフォーマット表示（MM:SS）
+  get formattedRecordTime() {
+    const m = Math.floor(this.recordSeconds / 60).toString().padStart(2, '0');
+    const s = (this.recordSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  },
   errorMessage: '',
   histories: [],
   toast: {
@@ -84,6 +91,51 @@ const store = reactive({
       inputText: this.inputText,
       resultText: this.resultText
     });
+  },
+
+  // 音声録音の開始
+  async startRecording() {
+    if (this.isRecording || this.isSummarizing || this.isTranscribing) {
+      return;
+    }
+    try {
+      await audio.startRecording({
+        onTick: () => {
+          this.recordSeconds++;
+        },
+        onError: (err) => {
+          this.showToast('マイクエラー: ' + err.message, 'danger');
+          this.stopRecordingAndTranscribe();
+        }
+      });
+      this.isRecording = true;
+      this.recordSeconds = 0;
+    } catch (err) {
+      this.showToast('マイクの使用が拒否されたか、未接続です: ' + err.message, 'danger');
+    }
+  },
+
+  // 録音停止と文字起こし実行
+  async stopRecordingAndTranscribe() {
+    if (!this.isRecording) {
+      return;
+    }
+    this.isRecording = false;
+    this.isTranscribing = true;
+    try {
+      const blob = await audio.stopRecording();
+      const text = await api.transcribeAudio(blob);
+      if (text) {
+        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
+        this.setDraft();
+        this.showToast('文字起こしが完了しました', 'success');
+      }
+    } catch (err) {
+      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
+    } finally {
+      this.isTranscribing = false;
+      this.recordSeconds = 0;
+    }
   },
 
   // 要約実行

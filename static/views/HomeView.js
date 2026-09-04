@@ -1,5 +1,6 @@
 import store, { SUMMARY_STYLES } from '../store.js';
 import * as storage from '../services/storage.js';
+import * as download from '../services/download.js';
 
 export default {
   name: 'HomeView',
@@ -32,6 +33,21 @@ export default {
       } catch (err) {
         this.store.showToast('クリップボードへのコピーに失敗しました', 'danger');
       }
+    },
+    // テキスト形式でダウンロード
+    downloadText() {
+      if (!this.store.resultText) {
+        return;
+      }
+      download.downloadTextFile('summary.txt', this.store.resultText);
+      this.store.showToast('テキストファイルをダウンロードしました', 'success');
+    },
+    // PDF形式で印刷・保存
+    downloadPdf() {
+      if (!this.store.resultText) {
+        return;
+      }
+      download.printAsPdf();
     }
   },
   template: `
@@ -62,12 +78,39 @@ export default {
                   :disabled="store.isSummarizing"
                 ></textarea>
               </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted small">{{ store.inputText.length }}文字</span>
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                  <span class="text-muted small">{{ store.inputText.length }}文字</span>
+                  <div class="d-inline-flex align-items-center ms-2">
+                    <button
+                      v-if="!store.isRecording"
+                      type="button"
+                      class="btn btn-outline-danger btn-sm d-flex align-items-center"
+                      @click="store.startRecording()"
+                      :disabled="store.isSummarizing || store.isTranscribing"
+                    >
+                      <i class="bi bi-record-circle me-1"></i>録音
+                    </button>
+                    <template v-else>
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm d-flex align-items-center"
+                        @click="store.stopRecordingAndTranscribe()"
+                      >
+                        <i class="bi bi-stop-circle me-1"></i>停止
+                      </button>
+                      <span class="badge bg-secondary ms-2 font-monospace">{{ store.formattedRecordTime }}</span>
+                    </template>
+                    <div v-if="store.isTranscribing" class="d-inline-flex align-items-center ms-2">
+                      <span class="spinner-border spinner-border-sm text-primary me-1" role="status" aria-hidden="true"></span>
+                      <span class="text-muted small">文字起こし中...</span>
+                    </div>
+                  </div>
+                </div>
                 <button
                   type="button"
                   class="btn btn-primary px-4 fw-semibold d-flex align-items-center"
-                  :disabled="!store.inputText.trim() || store.isSummarizing"
+                  :disabled="!store.inputText.trim() || store.isSummarizing || store.isRecording || store.isTranscribing"
                   @click="store.executeSummarize()"
                 >
                   <span v-if="store.isSummarizing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -121,14 +164,41 @@ export default {
           <div class="card shadow-sm border">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
               <h5 class="mb-0 fw-semibold">要約結果</h5>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-secondary d-flex align-items-center"
-                @click="handleCopy"
-                :disabled="!store.resultText"
-              >
-                <i class="bi bi-clipboard-check me-1"></i>コピー
-              </button>
+              <div class="d-flex align-items-center gap-2 d-print-none">
+                <!-- ダウンロードドロップダウン -->
+                <div class="dropdown">
+                  <button
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center"
+                    type="button"
+                    id="downloadDropdown"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    :disabled="!store.resultText"
+                  >
+                    <i class="bi bi-download me-1"></i>ダウンロード
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown">
+                    <li>
+                      <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadText">
+                        <i class="bi bi-file-earmark-text me-2"></i>テキスト (.txt)
+                      </button>
+                    </li>
+                    <li>
+                      <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadPdf">
+                        <i class="bi bi-printer me-2"></i>プリント
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                  @click="handleCopy"
+                  :disabled="!store.resultText"
+                >
+                  <i class="bi bi-clipboard-check me-1"></i>コピー
+                </button>
+              </div>
             </div>
             <div class="card-body">
               <div v-if="store.errorMessage" class="alert alert-danger mb-0" role="alert">
