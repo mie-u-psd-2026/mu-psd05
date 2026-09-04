@@ -1,8 +1,148 @@
+import store, { SUMMARY_STYLES } from '../store.js';
+import * as storage from '../services/storage.js';
+
 export default {
+  name: 'HomeView',
+  data() {
+    return {
+      store,
+      storage,
+      styles: SUMMARY_STYLES
+    };
+  },
+  methods: {
+    // クリップボードからのテキスト貼り付け
+    async handlePaste() {
+      try {
+        const text = await navigator.clipboard.readText();
+        this.store.inputText = text;
+        this.store.setDraft();
+      } catch (err) {
+        this.store.showToast('クリップボードの読み取りに失敗しました', 'danger');
+      }
+    },
+    // 要約結果のクリップボードコピー
+    async handleCopy() {
+      if (!this.store.resultText) {
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(this.store.resultText);
+        this.store.showToast('コピーしました', 'success');
+      } catch (err) {
+        this.store.showToast('クリップボードへのコピーに失敗しました', 'danger');
+      }
+    }
+  },
   template: `
-    <div class="container-fluid">
-      <h2>メイン要約画面（準備中）</h2>
-      <p class="text-muted">Task 3で実装されます。</p>
+    <div class="container-fluid p-0">
+      <div class="row g-4">
+        <!-- 左上 入力エリア (col-12 col-lg-8) -->
+        <div class="col-12 col-lg-8">
+          <div class="card h-100 shadow-sm border">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+              <h5 class="mb-0 fw-semibold">入力</h5>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                @click="handlePaste"
+                :disabled="store.isSummarizing"
+              >
+                <i class="bi bi-clipboard me-1"></i>貼り付け
+              </button>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <div class="mb-3 flex-grow-1">
+                <textarea
+                  class="form-control"
+                  rows="8"
+                  placeholder="入力するか、左下の録音から文字起こししてください…"
+                  v-model="store.inputText"
+                  @input="store.setDraft()"
+                  :disabled="store.isSummarizing"
+                ></textarea>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted small">{{ store.inputText.length }}文字</span>
+                <button
+                  type="button"
+                  class="btn btn-primary px-4 fw-semibold d-flex align-items-center"
+                  :disabled="!store.inputText.trim() || store.isSummarizing"
+                  @click="store.executeSummarize()"
+                >
+                  <span v-if="store.isSummarizing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  <span v-if="store.isSummarizing">要約中...</span>
+                  <span v-else><i class="bi bi-send me-1"></i>要約</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右上 要約スタイル選択エリア (col-12 col-lg-4) -->
+        <div class="col-12 col-lg-4">
+          <div class="card h-100 shadow-sm border">
+            <div class="card-header bg-transparent py-3">
+              <h5 class="mb-0 fw-semibold">要約スタイル</h5>
+            </div>
+            <div class="card-body">
+              <div class="list-group">
+                <div
+                  v-for="style in styles"
+                  :key="style.id"
+                  class="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer py-3"
+                  :class="{ active: store.selectedStyle === style.id }"
+                  @click="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
+                  role="button"
+                >
+                  <div class="d-flex align-items-center">
+                    <i :class="style.icon" class="fs-5 me-2"></i>
+                    <span class="fw-medium">{{ style.name }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm p-1 text-secondary"
+                    :class="{ 'text-white': store.selectedStyle === style.id }"
+                    @click.stop
+                    v-popover
+                    :data-bs-content="style.desc"
+                    title="スタイル詳細"
+                  >
+                    <i class="bi bi-info-circle"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 下段 要約出力エリア (col-12) -->
+        <div class="col-12">
+          <div class="card shadow-sm border">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
+              <h5 class="mb-0 fw-semibold">要約結果</h5>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary d-flex align-items-center"
+                @click="handleCopy"
+                :disabled="!store.resultText"
+              >
+                <i class="bi bi-clipboard-check me-1"></i>コピー
+              </button>
+            </div>
+            <div class="card-body">
+              <div v-if="store.errorMessage" class="alert alert-danger mb-0" role="alert">
+                {{ store.errorMessage }}
+              </div>
+              <div
+                v-else
+                class="p-3 rounded bg-body-tertiary border"
+                style="min-height: 140px; white-space: pre-wrap;"
+              >{{ store.resultText || 'ここに要約結果が表示されます…' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `
 };

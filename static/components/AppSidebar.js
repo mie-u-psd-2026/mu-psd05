@@ -3,6 +3,9 @@ export default {
   emits: ['new-summary'],
   methods: {
     handleNewSummary() {
+      if (this.$store) {
+        this.$store.resetCurrentSummary();
+      }
       this.$emit('new-summary');
       if (this.$route.path !== '/') {
         this.$router.push('/');
