@@ -58,6 +58,11 @@ export default {
       download.printAsPdf();
     }
   },
+  unmounted() {
+    if (this.store.isRecording) {
+      this.store.cancelRecording();
+    }
+  },
   template: `
     <div class="container-fluid p-0">
       <div class="row g-3 g-md-4">

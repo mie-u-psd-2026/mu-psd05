@@ -8,6 +8,12 @@ export default {
       itemToDelete: null
     };
   },
+  computed: {
+    // 要約または文字起こしの処理実行中判定
+    isProcessing() {
+      return this.store.isSummarizing || this.store.isTranscribing;
+    }
+  },
   methods: {
     // 要約スタイル情報の取得
     getStyleInfo(styleId) {
@@ -27,6 +33,11 @@ export default {
     },
     // 履歴アイテムを選択してメイン画面へ復元
     handleSelect(item) {
+      if (this.isProcessing) {
+        const action = this.store.isSummarizing ? '要約' : '文字起こし';
+        this.store.showToast(`${action}処理中のため、履歴の復元はできません`, 'warning');
+        return;
+      }
       this.store.loadHistoryToMain(item);
       this.$router.push('/');
     },
@@ -82,6 +93,17 @@ export default {
           <h5 class="mb-0 fw-semibold">要約履歴一覧</h5>
           <span class="badge bg-secondary">{{ store.histories.length }}件</span>
         </div>
+
+        <!-- 処理実行中の事前案内バナー -->
+        <div
+          v-if="isProcessing"
+          class="alert alert-warning py-2 px-3 mb-0 border-0 border-bottom rounded-0 d-flex align-items-center small"
+          role="status"
+        >
+          <span class="spinner-border spinner-border-sm me-2 flex-shrink-0" role="status" aria-hidden="true"></span>
+          <span>メイン画面で{{ store.isSummarizing ? '要約' : '文字起こし' }}処理が実行中です。完了するまで履歴の復元は制限されます。</span>
+        </div>
+
         <div class="card-body p-0">
           <!-- 0件の場合 -->
           <div v-if="store.histories.length === 0" class="text-center text-muted py-5">
@@ -94,13 +116,17 @@ export default {
             <div
               v-for="item in store.histories"
               :key="item.id"
-              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
+              class="list-group-item d-flex justify-content-between align-items-center py-3"
+              :class="{ 'list-group-item-action': !isProcessing }"
             >
               <div
-                class="flex-grow-1 me-3 overflow-hidden cursor-pointer"
+                class="flex-grow-1 me-3 overflow-hidden"
+                :class="isProcessing ? 'opacity-50' : 'cursor-pointer'"
+                :style="isProcessing ? 'cursor: not-allowed;' : ''"
                 role="button"
                 tabindex="0"
-                :aria-label="\`履歴を復元: \${getStyleInfo(item.selectedStyle).name} (\${formatDate(item.createdAt)})\`"
+                :aria-disabled="isProcessing"
+                :aria-label="\`履歴を復元: \${getStyleInfo(item.selectedStyle).name} (\${formatDate(item.createdAt)})\${isProcessing ? '（現在処理中のため選択不可）' : ''}\`"
                 @click="handleSelect(item)"
                 @keydown.enter="handleSelect(item)"
                 @keydown.space.prevent="handleSelect(item)"

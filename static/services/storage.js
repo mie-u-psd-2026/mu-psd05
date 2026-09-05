@@ -4,6 +4,9 @@ export const HISTORY_KEY = 'summarizer_history';
 export const STYLE_KEY = 'summarizer_style';
 
 // 有効期限および件数上限定数
+/**
+ * @deprecated 履歴の14日間TTL削除仕様の撤廃に伴い非推奨。後方互換性のために保持。
+ */
 export const HISTORY_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14日間
 export const STYLE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7日間
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
@@ -58,6 +61,11 @@ function readHistoryRecord() {
       const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : Date.now();
       return { items: validItems, lastAccessedAt: lastAccessed };
     }
+    // 生配列データが存在した場合の後方互換フォールバック
+    if (Array.isArray(parsed)) {
+      const validItems = parsed.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
+      return { items: validItems, lastAccessedAt: Date.now() };
+    }
     return { items: [], lastAccessedAt: Date.now() };
   } catch (error) {
     console.error('履歴データの読み込みに失敗しました:', error);
@@ -98,8 +106,6 @@ export function saveHistory({ inputText, resultText, selectedStyle }) {
 // 履歴取得
 export function getHistories() {
   const record = readHistoryRecord();
-  record.lastAccessedAt = Date.now();
-  writeHistoryRecord(record);
   return record.items;
 }
 
@@ -147,20 +153,6 @@ export function getSelectedStyle() {
 // 期限切れデータクリーンアップ
 export function cleanupExpiredData() {
   const now = Date.now();
-
-  // 履歴クリーンアップ（14日アクセスなし）
-  try {
-    const historyRaw = localStorage.getItem(HISTORY_KEY);
-    if (historyRaw) {
-      const historyRecord = JSON.parse(historyRaw);
-      const lastAccessed = typeof historyRecord?.lastAccessedAt === 'number' ? historyRecord.lastAccessedAt : null;
-      if (lastAccessed && (now - lastAccessed > HISTORY_TTL_MS)) {
-        localStorage.removeItem(HISTORY_KEY);
-      }
-    }
-  } catch (error) {
-    console.error('履歴データのクリーンアップ中にエラーが発生しました:', error);
-  }
 
   // スタイル設定クリーンアップ（7日アクセスなし）
   try {

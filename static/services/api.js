@@ -43,10 +43,52 @@ export async function summarizeText({ text, summaryType, timeoutMs } = {}, optio
   return data.summary;
 }
 
+// 音声BlobのMIMEタイプから適切なファイル拡張子を判定
+export function getAudioExtension(audioBlob) {
+  const MIME_TO_EXT = {
+    'audio/webm': 'webm',
+    'audio/mp4': 'm4a',
+    'audio/x-m4a': 'm4a',
+    'audio/aac': 'm4a',
+    'audio/ogg': 'ogg',
+    'audio/opus': 'ogg',
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/wave': 'wav',
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3'
+  };
+
+  const rawType = (typeof audioBlob?.type === 'string' ? audioBlob.type : '').toLowerCase();
+  const baseMime = rawType.split(';')[0].trim();
+
+  if (MIME_TO_EXT[baseMime]) {
+    return MIME_TO_EXT[baseMime];
+  }
+
+  // フォールバック: Safari/iOSなどWebM非対応環境ではm4a、それ以外はwebm
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.MediaRecorder !== 'undefined' &&
+    typeof window.MediaRecorder.isTypeSupported === 'function'
+  ) {
+    if (!window.MediaRecorder.isTypeSupported('audio/webm') && window.MediaRecorder.isTypeSupported('audio/mp4')) {
+      return 'm4a';
+    }
+  }
+
+  return 'webm';
+}
+
 // 音声文字起こしAPI呼び出し
 export async function transcribeAudio(audioBlob, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  if (!audioBlob || !(audioBlob instanceof Blob)) {
+    throw new Error('文字起こし対象の音声データが不正です');
+  }
+
+  const extension = getAudioExtension(audioBlob);
   const formData = new FormData();
-  formData.append('audio', audioBlob, 'record.webm');
+  formData.append('audio', audioBlob, `record.${extension}`);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

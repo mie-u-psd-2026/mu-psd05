@@ -56,7 +56,7 @@ const store = reactive({
     this.histories = storage.getHistories();
 
     const savedStyle = storage.getSelectedStyle();
-    if (savedStyle) {
+    if (savedStyle && SUMMARY_STYLES.some(s => s.id === savedStyle)) {
       this.selectedStyle = savedStyle;
     }
 
@@ -91,6 +91,17 @@ const store = reactive({
     });
   },
 
+  // 録音のキャンセル・中断（文字起こしは実行せずリソースのみ解放）
+  async cancelRecording() {
+    this.isRecording = false;
+    this.recordSeconds = 0;
+    try {
+      await audio.stopRecording();
+    } catch (_) {
+      // 停止処理の例外は安全に無視
+    }
+  },
+
   // 音声録音の開始
   async startRecording() {
     if (this.isRecording || this.isSummarizing || this.isTranscribing) {
@@ -103,7 +114,7 @@ const store = reactive({
         },
         onError: (err) => {
           this.showToast('マイクエラー: ' + err.message, 'danger');
-          this.stopRecordingAndTranscribe();
+          this.cancelRecording();
         }
       });
       this.isRecording = true;
@@ -138,7 +149,10 @@ const store = reactive({
 
   // 要約実行
   async executeSummarize() {
-    if (!this.inputText.trim() || this.isSummarizing) {
+    const targetText = this.inputText.trim();
+    const targetStyle = this.selectedStyle;
+
+    if (!targetText || this.isSummarizing) {
       return;
     }
 
@@ -147,15 +161,15 @@ const store = reactive({
 
     try {
       const summary = await api.summarizeText({
-        text: this.inputText,
-        summaryType: this.selectedStyle
+        text: targetText,
+        summaryType: targetStyle
       });
       this.resultText = summary;
 
       const item = storage.saveHistory({
-        inputText: this.inputText,
+        inputText: targetText,
         resultText: summary,
-        selectedStyle: this.selectedStyle
+        selectedStyle: targetStyle
       });
 
       this.histories.unshift(item);
@@ -184,7 +198,10 @@ const store = reactive({
   loadHistoryToMain(item) {
     this.inputText = item.inputText || '';
     this.resultText = item.resultText || '';
-    this.selectedStyle = item.selectedStyle || 'short';
+    const styleCandidate = item.selectedStyle;
+    this.selectedStyle = (styleCandidate && SUMMARY_STYLES.some(s => s.id === styleCandidate))
+      ? styleCandidate
+      : 'short';
     this.setDraft();
   },
 
