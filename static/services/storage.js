@@ -54,7 +54,9 @@ function readHistoryRecord() {
     }
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.items)) {
-      return parsed;
+      const validItems = parsed.items.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
+      const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : Date.now();
+      return { items: validItems, lastAccessedAt: lastAccessed };
     }
     return { items: [], lastAccessedAt: Date.now() };
   } catch (error) {
@@ -130,7 +132,8 @@ export function getSelectedStyle() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed.styleId !== 'string') return null;
 
-    if (Date.now() - (parsed.lastAccessedAt || 0) > STYLE_TTL_MS) {
+    const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : null;
+    if (lastAccessed && (Date.now() - lastAccessed > STYLE_TTL_MS)) {
       localStorage.removeItem(STYLE_KEY);
       return null;
     }
@@ -150,13 +153,13 @@ export function cleanupExpiredData() {
     const historyRaw = localStorage.getItem(HISTORY_KEY);
     if (historyRaw) {
       const historyRecord = JSON.parse(historyRaw);
-      if (historyRecord && (now - (historyRecord.lastAccessedAt || 0) > HISTORY_TTL_MS)) {
+      const lastAccessed = typeof historyRecord?.lastAccessedAt === 'number' ? historyRecord.lastAccessedAt : null;
+      if (lastAccessed && (now - lastAccessed > HISTORY_TTL_MS)) {
         localStorage.removeItem(HISTORY_KEY);
       }
     }
   } catch (error) {
     console.error('履歴データのクリーンアップ中にエラーが発生しました:', error);
-    localStorage.removeItem(HISTORY_KEY);
   }
 
   // スタイル設定クリーンアップ（7日アクセスなし）
@@ -164,12 +167,12 @@ export function cleanupExpiredData() {
     const styleRaw = localStorage.getItem(STYLE_KEY);
     if (styleRaw) {
       const styleRecord = JSON.parse(styleRaw);
-      if (styleRecord && (now - (styleRecord.lastAccessedAt || 0) > STYLE_TTL_MS)) {
+      const lastAccessed = typeof styleRecord?.lastAccessedAt === 'number' ? styleRecord.lastAccessedAt : null;
+      if (lastAccessed && (now - lastAccessed > STYLE_TTL_MS)) {
         localStorage.removeItem(STYLE_KEY);
       }
     }
   } catch (error) {
     console.error('スタイル設定のクリーンアップ中にエラーが発生しました:', error);
-    localStorage.removeItem(STYLE_KEY);
   }
 }

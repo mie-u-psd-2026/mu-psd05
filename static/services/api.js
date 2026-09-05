@@ -1,5 +1,11 @@
+const DEFAULT_TIMEOUT_MS = 60000;
+
 // テキスト要約API呼び出し
-export async function summarizeText({ text, summaryType }) {
+export async function summarizeText({ text, summaryType, timeoutMs } = {}, optionalTimeoutMs) {
+  const effectiveTimeout = optionalTimeoutMs ?? timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), effectiveTimeout);
+
   let response;
   try {
     response = await fetch('/api/summarize', {
@@ -10,10 +16,16 @@ export async function summarizeText({ text, summaryType }) {
       body: JSON.stringify({
         text,
         summary_type: summaryType
-      })
+      }),
+      signal: controller.signal
     });
   } catch (networkError) {
+    if (networkError.name === 'AbortError') {
+      throw new Error('要約処理がタイムアウトしました。しばらく待ってから再試行してください');
+    }
     throw new Error(`ネットワークエラーが発生しました: ${networkError.message}`);
+  } finally {
+    clearTimeout(timer);
   }
 
   let data;
@@ -32,18 +44,27 @@ export async function summarizeText({ text, summaryType }) {
 }
 
 // 音声文字起こしAPI呼び出し
-export async function transcribeAudio(audioBlob) {
+export async function transcribeAudio(audioBlob, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const formData = new FormData();
   formData.append('audio', audioBlob, 'record.webm');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   let response;
   try {
     response = await fetch('/api/transcribe', {
       method: 'POST',
-      body: formData
+      body: formData,
+      signal: controller.signal
     });
   } catch (networkError) {
+    if (networkError.name === 'AbortError') {
+      throw new Error('文字起こし処理がタイムアウトしました');
+    }
     throw new Error(`ネットワークエラーが発生しました: ${networkError.message}`);
+  } finally {
+    clearTimeout(timer);
   }
 
   let data;
