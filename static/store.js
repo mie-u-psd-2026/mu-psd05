@@ -25,9 +25,6 @@ export const SUMMARY_STYLES = [
   }
 ];
 
-// トースト自動非表示タイマー
-let toastTimer = null;
-
 // アプリケーション全体の状態管理ストア
 const store = reactive({
   // 状態プロパティ
@@ -49,7 +46,8 @@ const store = reactive({
   toast: {
     show: false,
     message: '',
-    variant: 'primary'
+    variant: 'primary',
+    timestamp: 0
   },
 
   // 初期化処理
@@ -195,13 +193,7 @@ const store = reactive({
     this.toast.message = message;
     this.toast.variant = variant;
     this.toast.show = true;
-
-    if (toastTimer) {
-      clearTimeout(toastTimer);
-    }
-    toastTimer = setTimeout(() => {
-      this.toast.show = false;
-    }, 3000);
+    this.toast.timestamp = Date.now();
   }
 });
 

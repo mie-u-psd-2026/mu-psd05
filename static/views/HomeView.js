@@ -1,9 +1,17 @@
 import store, { SUMMARY_STYLES } from '../store.js';
 import * as storage from '../services/storage.js';
 import * as download from '../services/download.js';
+import * as audio from '../services/audio.js';
 
 export default {
   name: 'HomeView',
+  unmounted() {
+    if (this.store.isRecording) {
+      this.store.isRecording = false;
+      this.store.recordSeconds = 0;
+      audio.stopRecording();
+    }
+  },
   data() {
     return {
       store,
@@ -52,9 +60,9 @@ export default {
   },
   template: `
     <div class="container-fluid p-0">
-      <div class="row g-4">
+      <div class="row g-3 g-md-4">
         <!-- 左上 入力エリア (col-12 col-lg-8) -->
-        <div class="col-12 col-lg-8">
+        <div class="col-12 col-lg-8 d-print-none">
           <div class="card h-100 shadow-sm border">
             <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
               <h5 class="mb-0 fw-semibold">入力</h5>
@@ -123,7 +131,7 @@ export default {
         </div>
 
         <!-- 右上 要約スタイル選択エリア (col-12 col-lg-4) -->
-        <div class="col-12 col-lg-4">
+        <div class="col-12 col-lg-4 d-print-none">
           <div class="card h-100 shadow-sm border">
             <div class="card-header bg-transparent py-3">
               <h5 class="mb-0 fw-semibold">要約スタイル</h5>
@@ -136,7 +144,9 @@ export default {
                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer py-3"
                   :class="{ active: store.selectedStyle === style.id }"
                   @click="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
+                  @keydown.enter="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
                   role="button"
+                  tabindex="0"
                 >
                   <div class="d-flex align-items-center">
                     <i :class="style.icon" class="fs-5 me-2"></i>
@@ -173,7 +183,7 @@ export default {
                     id="downloadDropdown"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                    :disabled="!store.resultText"
+                    :disabled="!store.resultText || store.isSummarizing"
                   >
                     <i class="bi bi-download me-1"></i>ダウンロード
                   </button>
@@ -185,7 +195,7 @@ export default {
                     </li>
                     <li>
                       <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadPdf">
-                        <i class="bi bi-printer me-2"></i>プリント
+                        <i class="bi bi-printer me-2"></i>印刷 / PDF保存 (.pdf)
                       </button>
                     </li>
                   </ul>

@@ -41,7 +41,7 @@ export default {
     </header>
 
     <!-- サイドバー本体 (PC/タブレット: 768px以上で左常時表示 / モバイル: 768px未満でオフキャンバス) -->
-    <aside id="sidebarOffcanvas" class="offcanvas-md offcanvas-start bg-light border-end d-print-none flex-shrink-0" tabindex="-1" style="width: 230px;">
+    <aside id="sidebarOffcanvas" class="offcanvas-md offcanvas-start bg-body-tertiary border-end d-print-none flex-shrink-0" tabindex="-1" style="width: 230px;">
       <!-- モバイル用オフキャンバスヘッダー -->
       <div class="offcanvas-header border-bottom d-md-none">
         <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">

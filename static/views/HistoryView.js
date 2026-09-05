@@ -5,8 +5,7 @@ export default {
   data() {
     return {
       store,
-      itemToDelete: null,
-      deleteModalInstance: null
+      itemToDelete: null
     };
   },
   methods: {
@@ -34,31 +33,33 @@ export default {
     // 削除確認モーダルを表示
     openDeleteModal(item) {
       this.itemToDelete = item;
-      if (this.deleteModalInstance) {
-        this.deleteModalInstance.show();
+      if (this._deleteModalInstance) {
+        this._deleteModalInstance.show();
       }
     },
     // 削除の確定処理
     confirmDelete() {
       if (this.itemToDelete) {
         this.store.deleteHistoryItem(this.itemToDelete.id);
-        this.itemToDelete = null;
       }
-      if (this.deleteModalInstance) {
-        this.deleteModalInstance.hide();
+      if (this._deleteModalInstance) {
+        this._deleteModalInstance.hide();
       }
     }
   },
   mounted() {
     const modalEl = this.$refs.deleteModalRef;
     if (modalEl && typeof bootstrap !== 'undefined') {
-      this.deleteModalInstance = new bootstrap.Modal(modalEl);
+      this._deleteModalInstance = new bootstrap.Modal(modalEl);
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        this.itemToDelete = null;
+      });
     }
   },
   unmounted() {
-    if (this.deleteModalInstance) {
-      this.deleteModalInstance.dispose();
-      this.deleteModalInstance = null;
+    if (this._deleteModalInstance) {
+      this._deleteModalInstance.dispose();
+      this._deleteModalInstance = null;
     }
   },
   template: `
@@ -85,7 +86,7 @@ export default {
               @click="handleSelect(item)"
             >
               <div class="flex-grow-1 me-3 overflow-hidden">
-                <div class="d-flex align-items-center gap-2 mb-1">
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
                   <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center">
                     <i :class="getStyleInfo(item.selectedStyle).icon" class="me-1"></i>
                     {{ getStyleInfo(item.selectedStyle).name }}
@@ -94,7 +95,7 @@ export default {
                 </div>
                 <div
                   class="text-body small"
-                  style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"
+                  style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;"
                 >
                   {{ item.resultText || item.inputText || '（内容なし）' }}
                 </div>
@@ -105,6 +106,7 @@ export default {
                   class="btn btn-sm btn-outline-danger ms-3"
                   @click.stop="openDeleteModal(item)"
                   title="削除"
+                  aria-label="この要約履歴を削除"
                 >
                   <i class="bi bi-trash"></i>
                 </button>
