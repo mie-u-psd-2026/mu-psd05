@@ -56,11 +56,23 @@ export default {
       });
     }
   },
-  unmounted() {
+  beforeUnmount() {
     if (this._deleteModalInstance) {
-      this._deleteModalInstance.dispose();
+      try {
+        this._deleteModalInstance.hide();
+        this._deleteModalInstance.dispose();
+      } catch (e) {
+        console.warn('モーダルインスタンスの破棄に失敗しました:', e);
+      }
       this._deleteModalInstance = null;
     }
+
+    // SPA画面遷移時に残存するBootstrapのバックドロップおよびbodyスクロールロックを確実に強制解除
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(el => el.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
   },
   template: `
     <div class="container-fluid p-0">
@@ -82,10 +94,17 @@ export default {
             <div
               v-for="item in store.histories"
               :key="item.id"
-              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer py-3"
-              @click="handleSelect(item)"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
             >
-              <div class="flex-grow-1 me-3 overflow-hidden">
+              <div
+                class="flex-grow-1 me-3 overflow-hidden cursor-pointer"
+                role="button"
+                tabindex="0"
+                :aria-label="\`履歴を復元: \${getStyleInfo(item.selectedStyle).name} (\${formatDate(item.createdAt)})\`"
+                @click="handleSelect(item)"
+                @keydown.enter="handleSelect(item)"
+                @keydown.space.prevent="handleSelect(item)"
+              >
                 <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
                   <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center">
                     <i :class="getStyleInfo(item.selectedStyle).icon" class="me-1"></i>
