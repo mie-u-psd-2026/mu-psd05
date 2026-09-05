@@ -166,12 +166,15 @@ ollama launch opencode --model=qwen3.5:0.8b
 
 - [Flask](https://flask.palletsprojects.com/en/stable/)
   - Python で書かれた Webアプリケーションサーバ
-
 - [Vue.js](https://vuejs.org/)
   - JavaScript製製のWebフロントエンド フレームワーク
-
 - [Vue.js Tutorial](https://ja.vuejs.org/tutorial/)
   - Vue.jsの入門用チュートリアル
-
+- [Vue Router](https://router.vuejs.org/guide/)
+  - SPAを構築するための公式プラグイン
+- [Bootstrap](https://getbootstrap.jp/docs/5.3/getting-started/introduction/)
+  - UIを作成するたえのフロントエンドツールキット
 - [OpenAI API](https://github.com/openai/openai-python)
   - Pythonから、OpenAI APIを呼び出すライブラリ
+- [Ollama Python Library](https://github.com/ollama/ollama-python)
+  - PythonからOllamaのNative APIを呼び出すライブラリ
