@@ -1,10 +1,19 @@
-from flask import Flask, request, jsonify
+from pathlib import Path
+from flask import Flask, request, jsonify, redirect, url_for
 
 from services.transcription import transcribe_audio
 from services.summarization import summarize_text
 
 
-app = Flask(__name__)
+# プロジェクトルート直下の frontend ディレクトリの絶対パスを導出
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+app = Flask(
+    __name__,
+    static_folder=str(FRONTEND_DIR),
+    static_url_path="/static"
+)
 
 
 # ==========================================
@@ -155,8 +164,6 @@ def submit():
 # ==========================================
 # `/`: ルートをstatic/へ転送する
 # ==========================================
-
-from flask import redirect, url_for
 
 @app.route('/')
 def index():
