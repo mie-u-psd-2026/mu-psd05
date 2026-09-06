@@ -32,6 +32,27 @@ export default {
           license: 'MIT',
           url: 'https://icons.getbootstrap.com/',
           siteName: 'icons.getbootstrap.com'
+        },
+        {
+          name: 'Marked',
+          version: 'v15.0.7',
+          license: 'MIT',
+          url: 'https://marked.js.org/',
+          siteName: 'marked.js.org'
+        },
+        {
+          name: 'DOMPurify',
+          version: 'v3.2.4',
+          license: 'MPL-2.0 / Apache-2.0',
+          url: 'https://github.com/cure53/DOMPurify',
+          siteName: 'github.com/cure53/DOMPurify'
+        },
+        {
+          name: 'wavesurfer.js',
+          version: 'v7.9.1',
+          license: 'BSD-3-Clause',
+          url: 'https://wavesurfer.xyz/',
+          siteName: 'wavesurfer.xyz'
         }
       ]
     };
