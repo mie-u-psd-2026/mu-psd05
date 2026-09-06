@@ -16,6 +16,71 @@
 - フロントエンド: Vue.jsとBootstrap 5.3のCDN版を用いています。
 - バックエンド: Python, FlaskとOllama APIを用いてローカル起動のOllamaを叩いています。
 
+![](./images/screenshot1.jpeg)
+
+# 🔧実行方法（開発用）
+
+Requirements:
+
+- Git
+- Python >= 3.13
+- Ollama
+
+### 1. リポジトリをclone
+
+```sh
+git clone https://github.com/mie-u-psd-2026/mu-psd05
+cd mu-psd05
+```
+
+### 2. Ollamaを起動し、モデルをダウンロード
+
+Ollamaのサーバーを起動します。
+
+```sh
+ollama serve
+```
+
+起動したOllamaを残したまま、ターミナル等で別タブを開くなどして、別のセッションでモデルをダウンロードします。
+
+```sh
+ollama pull qwen3.5:0.8b
+```
+
+### 3. Pythonに必要ライブラリを追加
+
+Pythonの仮想環境を`./.venv`に作成します。
+
+```sh
+python -m venv .venv
+```
+
+以下のコマンドを使って、Python仮想環境(venv)を有効化します。
+
+- macOS / Linux: `source .venv/bin/activate`
+- Windows (コマンドプロンプト): `.venv\Scripts\activate.bat`
+- Windows (PowerShell): `.venv\Scripts\Activate.ps1`
+
+必要なPythonライブラリをインストールします。
+
+```sh
+pip install -r requirement.txt
+pip install -r backend/requirement.txt
+```
+
+### 4. Flaskの開発サーバを起動
+
+次のコマンドを実行し、開発サーバを起動します。
+
+```sh
+python backend/app.py
+```
+
+ブラウザで[`http://localhost:5000/static/index.html`](http://localhost:5000/static/index.html)にアクセスすると、ページが表示されます。
+
+> [!CAUTION]
+> 開発サーバは[本番環境で使わないでください](https://flask.palletsprojects.com/en/stable/server/)。
+
 ## 関連ドキュメント
 
 - [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
@@ -102,18 +167,6 @@ pip install -r requirements.txt
 uv venv
 uv pip install -r requirements.txt
 ```
-
-# 実行方法
-
-- 以下のコマンドでサーバを起動します。
-  ```sh
-  cd backend
-  python app.py
-  ```
-- ブラウザで[以下のURL](http://localhost:5000/static/)にアクセスしてみてください。
-  ```
-  http://localhost:5000/static/
-  ```
 
 # 開発の参考資料
 
