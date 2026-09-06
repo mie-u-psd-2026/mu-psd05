@@ -126,7 +126,7 @@ export function saveSelectedStyle(styleId) {
     };
     localStorage.setItem(STYLE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('スタイルの保存に失敗しました:', error);
+    console.error('要約スタイルの保存に失敗しました:', error);
   }
 }
 
@@ -145,7 +145,7 @@ export function getSelectedStyle() {
     }
     return parsed.styleId;
   } catch (error) {
-    console.error('スタイルの取得に失敗しました:', error);
+    console.error('要約スタイルの取得に失敗しました:', error);
     return null;
   }
 }
@@ -165,6 +165,6 @@ export function cleanupExpiredData() {
       }
     }
   } catch (error) {
-    console.error('スタイル設定のクリーンアップ中にエラーが発生しました:', error);
+    console.warn('スタイル設定のクリーンアップ中にエラーが発生しました:', error);
   }
 }

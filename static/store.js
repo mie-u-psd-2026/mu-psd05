@@ -7,21 +7,21 @@ import * as audio from './services/audio.js';
 export const SUMMARY_STYLES = [
   {
     id: 'short',
-    name: '簡潔要約',
+    name: '簡潔',
     icon: 'bi-lightning-charge',
-    desc: '重要な情報だけを残し、3〜5文程度でコンパクトにまとめます。'
+    desc: '重要な情報だけで3〜5文にまとめる'
   },
   {
     id: 'meeting',
-    name: '会議議事録',
+    name: '議事録',
     icon: 'bi-journal-text',
-    desc: '会議概要、決定事項、課題、次のアクションの4項目で整理します。'
+    desc: '内容を4項目に整理します。\n項目：「会議概要」「決定事項」「課題」「次のアクション」'
   },
   {
     id: 'report',
-    name: 'レポート形式',
+    name: 'レポート',
     icon: 'bi-file-earmark-text',
-    desc: '概要、詳細、結論の3段構成で論理的に整理します。'
+    desc: '論理的に、概要、詳細、結論の3段構成でまとめる'
   }
 ];
 
@@ -99,7 +99,7 @@ const store = reactive({
     }
     this.inputText = sample.text;
     this.setDraft();
-    this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
+    // this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
   },
 
   // 現在の要約入出力をリセット
@@ -140,14 +140,14 @@ const store = reactive({
           this.recordSeconds++;
         },
         onError: (err) => {
-          this.showToast('マイクエラー: ' + err.message, 'danger');
+          this.showToast('マイクでエラーが発生しました: ' + err.message, 'danger');
           this.cancelRecording();
         }
       });
       this.isRecording = true;
       this.recordSeconds = 0;
     } catch (err) {
-      this.showToast('マイクの使用が拒否されたか、未接続です: ' + err.message, 'danger');
+      this.showToast('マイクが利用できません: ' + err.message, 'danger');
     }
   },
 
@@ -179,13 +179,13 @@ const store = reactive({
     if (!file) return;
 
     if (this.isSummarizing || this.isRecording || this.isTranscribing) {
-      this.showToast('現在他の処理が実行中です', 'warning');
+      this.showToast('処理中です。終了してからもう一度操作してください', 'warning');
       return;
     }
 
     const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
     if (file.size > MAX_SIZE_BYTES) {
-      this.showToast('ファイルサイズが大きすぎます (100MB以下にしてください)', 'warning');
+      this.showToast('ファイルサイズが大きすぎます (100MB以下)', 'warning');
       return;
     }
 
@@ -195,7 +195,7 @@ const store = reactive({
     const isAudioType = file.type && file.type.startsWith('audio/');
 
     if (!hasValidExt && !isAudioType) {
-      this.showToast('対応していない音声形式です (.mp3, .wav, .m4a等を選択してください)', 'warning');
+      this.showToast('対応していない音声ファイルです (対応形式：mp3, wav, m4a等)', 'warning');
       return;
     }
 
@@ -205,7 +205,7 @@ const store = reactive({
       if (text) {
         this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
         this.setDraft();
-        this.showToast('音声ファイルの文字起こしが完了しました', 'success');
+        this.showToast('文字が起こし完了しました', 'success');
       }
     } catch (err) {
       this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
