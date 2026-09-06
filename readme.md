@@ -18,6 +18,36 @@
 
 ![](./images/screenshot1.jpeg)
 
+## 📖関連ドキュメント
+
+- [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
+- [Webアプリ画面設計](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
+- [テスト仕様書](./test-spec.md): 機能検証・APIテスト仕様
+
+# 🏗️ アーキテクチャ構成
+
+```mermaid
+flowchart LR
+    subgraph Client["フロントエンド (Vue 3 SPA)"]
+        UI["録音 / 要約 / 履歴UI"]
+    end
+
+    subgraph Backend["バックエンド (Flask :5000)"]
+        API_T["/api/transcribe<br>(音声文字起こしAPI)"]
+        API_S["/api/summarize<br>(テキスト要約API)"]
+        API_Sub["/api/submit<br>(要約送信・保存API)"]
+    end
+
+    subgraph AI["ローカルLLM (Ollama :11434)"]
+        Model["qwen3.5:0.8b"]
+    end
+
+    UI -->|音声データ送信| API_T
+    UI -->|要約リクエスト| API_S
+    UI -->|要約データ送信| API_Sub
+    API_S -->|Generate API| Model
+```
+
 # 🔧実行方法（開発用）
 
 Requirements:
@@ -81,46 +111,18 @@ python backend/app.py
 > [!CAUTION]
 > 開発サーバは[本番環境で使わないでください](https://flask.palletsprojects.com/en/stable/server/)。
 
-## 関連ドキュメント
-
-- [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
-- [Webアプリ画面設計](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
-- [テスト仕様書](./test-spec.md): 機能検証・APIテスト仕様
-
-# 環境
+# 🧰開発環境
 
 - [Visual Studio Code](https://code.visualstudio.com/)
 - [OpenCode](https://opencode.ai/ja)
 - [Ollama](https://ollama.com/)
 - [Python](https://www.python.org/)
 
-## アーキテクチャ構成
+# 📥環境構築
 
-```mermaid
-flowchart LR
-    subgraph Client["フロントエンド (Vue 3 SPA)"]
-        UI["録音 / 要約 / 履歴UI"]
-    end
+## 開発ツールインストール
 
-    subgraph Backend["バックエンド (Flask :5000)"]
-        API_T["/api/transcribe<br>(音声文字起こしAPI)"]
-        API_S["/api/summarize<br>(テキスト要約API)"]
-        API_Sub["/api/submit<br>(要約送信・保存API)"]
-    end
-
-    subgraph AI["ローカルLLM (Ollama :11434)"]
-        Model["qwen3.5:0.8b"]
-    end
-
-    UI -->|音声データ送信| API_T
-    UI -->|要約リクエスト| API_S
-    UI -->|要約データ送信| API_Sub
-    API_S -->|Generate API| Model
-```
-
-# 開発ツールインストール
-
-## Windows
+### Windows
 
 - 管理者権限でコマンドプロンプトを起動します。
 - 以下のコマンドを実行し、`winget`で必要なソフトウェアを入手します。
@@ -139,7 +141,7 @@ ollama pull qwen3.5:0.8b
   - Python
   - Vue.js Extension Pack
 
-## macOS
+### macOS
 
 [Homebrew](https://brew.sh/ja/)などのパッケージマネージャを使用して必要なソフトをインストールしてください。
 
@@ -151,9 +153,9 @@ ollama pull qwen3.5:0.8b
 
 （Pythonはuvを使用して`uv pin python 3.13`も可）
 
-# 環境セットアップ
+## 環境セットアップ
 
-## Python ライブラリインストール
+### Python ライブラリインストール
 
 以下のコマンドでPythonの利用ライブラリをインストールします。
 
@@ -168,7 +170,7 @@ uv venv
 uv pip install -r requirements.txt
 ```
 
-# 開発の参考資料
+# 📚開発の参考資料
 
 ## ローカルの Ollama を使う場合（低性能だが利用制限なし）：
 
@@ -196,7 +198,7 @@ ollama launch opencode --model=qwen3.5:0.8b
 
 - /connect と入力、プロバイダ一覧が表示されるので、Googleを選択、APIキーに先ほどのAPIキーを貼り付けます。
 
-# AIを用いたコード修正
+# 🤖AIを用いたコード修正
 
 - opencodeに修正を依頼してみてください。（例：猫語で回答するボタンを追加して ）
 
@@ -204,7 +206,7 @@ ollama launch opencode --model=qwen3.5:0.8b
 
 - バックエンド担当者は、app.py上にURLとAPIを作成してください。
 
-## 実装状況と今後の課題
+# 🚧実装状況と今後の課題
 
 - **フロントエンド実装**:
   - [x] Vue Routerによるマルチビュー構成（Home / History / About）
@@ -221,7 +223,7 @@ ollama launch opencode --model=qwen3.5:0.8b
   - [ ] `services/transcription.py`: Whisper等による実音声文字起こしの実装
   - [ ] `/api/submit`: （実装するか未定）SQLite等を用いた要約履歴のサーバーサイドDB永続化
 
-# 参考リンク
+# 📚🔗参考リンク
 
 - [Flask](https://flask.palletsprojects.com/en/stable/)
   - Python で書かれた Webアプリケーションサーバ
