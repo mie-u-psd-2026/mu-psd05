@@ -16,6 +16,12 @@
 - フロントエンド: Vue.jsとBootstrap 5.3のCDN版を用いています。
 - バックエンド: Python, FlaskとOllama APIを用いてローカル起動のOllamaを叩いています。
 
+## 関連ドキュメント
+
+- [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
+- [Webアプリ画面設計](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
+- [テスト仕様書](./test-spec.md): 機能検証・APIテスト仕様
+
 # 環境
 
 - [Visual Studio Code](https://code.visualstudio.com/)
