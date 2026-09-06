@@ -94,8 +94,7 @@ python -m venv .venv
 必要なPythonライブラリをインストールします。
 
 ```sh
-pip install -r requirement.txt
-pip install -r backend/requirement.txt
+pip install -r requirements.txt
 ```
 
 ### 4. Flaskの開発サーバを起動
