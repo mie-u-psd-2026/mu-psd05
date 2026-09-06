@@ -43,6 +43,7 @@ const store = reactive({
   },
   errorMessage: '',
   histories: [],
+  samples: [],
   toast: {
     show: false,
     message: '',
@@ -51,7 +52,7 @@ const store = reactive({
   },
 
   // 初期化処理
-  init() {
+  async init() {
     storage.cleanupExpiredData();
     this.histories = storage.getHistories();
 
@@ -73,6 +74,32 @@ const store = reactive({
     if (typeof window !== 'undefined') {
       window.store = this;
     }
+
+    // サンプル文章データの非同期読み込み
+    try {
+      const sampleUrl = new URL('./data/samples.json', import.meta.url).href;
+      const res = await fetch(sampleUrl);
+      if (res.ok) {
+        const data = await res.json();
+        this.samples = Array.isArray(data) ? data : [];
+      } else {
+        console.warn(`[store] samples.json の取得に失敗しました (HTTP ${res.status})`);
+        this.samples = [];
+      }
+    } catch (err) {
+      console.warn('[store] samples.json の読み込み中にエラーが発生しました:', err);
+      this.samples = [];
+    }
+  },
+
+  // サンプル文章の適用
+  applySample(sample) {
+    if (!sample || typeof sample.text !== 'string') {
+      return;
+    }
+    this.inputText = sample.text;
+    this.setDraft();
+    this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
   },
 
   // 現在の要約入出力をリセット
@@ -144,6 +171,46 @@ const store = reactive({
     } finally {
       this.isTranscribing = false;
       this.recordSeconds = 0;
+    }
+  },
+
+  // 音声ファイルの文字起こし
+  async transcribeAudioFile(file) {
+    if (!file) return;
+
+    if (this.isSummarizing || this.isRecording || this.isTranscribing) {
+      this.showToast('現在他の処理が実行中です', 'warning');
+      return;
+    }
+
+    const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
+    if (file.size > MAX_SIZE_BYTES) {
+      this.showToast('ファイルサイズが大きすぎます (100MB以下にしてください)', 'warning');
+      return;
+    }
+
+    const validExtensions = ['.mp3', '.wav', '.m4a', '.webm', '.ogg', '.aac', '.flac'];
+    const fileNameLower = (file.name || '').toLowerCase();
+    const hasValidExt = validExtensions.some(ext => fileNameLower.endsWith(ext));
+    const isAudioType = file.type && file.type.startsWith('audio/');
+
+    if (!hasValidExt && !isAudioType) {
+      this.showToast('対応していない音声形式です (.mp3, .wav, .m4a等を選択してください)', 'warning');
+      return;
+    }
+
+    this.isTranscribing = true;
+    try {
+      const text = await api.transcribeAudio(file);
+      if (text) {
+        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
+        this.setDraft();
+        this.showToast('音声ファイルの文字起こしが完了しました', 'success');
+      }
+    } catch (err) {
+      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
+    } finally {
+      this.isTranscribing = false;
     }
   },
 

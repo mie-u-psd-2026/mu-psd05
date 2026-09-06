@@ -81,14 +81,17 @@ export function getAudioExtension(audioBlob) {
 }
 
 // 音声文字起こしAPI呼び出し
-export async function transcribeAudio(audioBlob, timeoutMs = DEFAULT_TIMEOUT_MS) {
+export async function transcribeAudio(audioBlob, timeoutMs = 180000) {
   if (!audioBlob || !(audioBlob instanceof Blob)) {
     throw new Error('文字起こし対象の音声データが不正です');
   }
 
-  const extension = getAudioExtension(audioBlob);
+  const filename = (typeof audioBlob.name === 'string' && audioBlob.name)
+    ? audioBlob.name
+    : `record.${getAudioExtension(audioBlob)}`;
+
   const formData = new FormData();
-  formData.append('audio', audioBlob, `record.${extension}`);
+  formData.append('audio', audioBlob, filename);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

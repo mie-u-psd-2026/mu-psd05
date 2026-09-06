@@ -2,7 +2,24 @@
   <div class="row g-3 g-md-4">
     <!-- 左上 入力エリア (col-12 col-lg-8) -->
     <div class="col-12 col-lg-8 d-print-none">
-      <div class="card h-100 shadow-sm border">
+      <div
+        class="card h-100 shadow-sm border position-relative"
+        @dragover="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleFileDrop"
+      >
+        <!-- ドラッグ&ドロップ オーバーレイUI -->
+        <div
+          v-if="isDragging"
+          class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded z-3"
+          style="border: 2px dashed var(--bs-primary); pointer-events: none;"
+          aria-hidden="true"
+        >
+          <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2"></i>
+          <p class="fw-semibold text-primary mb-0">ここに音声ファイルをドロップして文字起こし</p>
+          <span class="text-muted small mt-1">.mp3, .wav, .m4a, .webm, .ogg, .aac, .flac (最大100MB)</span>
+        </div>
+
         <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
           <h5 class="mb-0 fw-semibold">入力</h5>
           <button
@@ -15,15 +32,46 @@
           </button>
         </div>
         <div class="card-body d-flex flex-column">
-          <div class="mb-3 flex-grow-1">
+          <div class="mb-3 flex-grow-1 position-relative">
             <textarea
-              class="form-control"
+              class="form-control pb-5"
               rows="8"
               placeholder="入力するか、左下の録音から文字起こししてください…"
               v-model="store.inputText"
               @input="store.setDraft()"
               :disabled="store.isSummarizing"
             ></textarea>
+            <!-- サンプル文章サジェストチップ -->
+            <div
+              v-if="store.samples && store.samples.length > 0"
+              class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
+              :style="{
+                opacity: store.inputText ? 0 : 1,
+                visibility: store.inputText ? 'hidden' : 'visible',
+                pointerEvents: store.inputText ? 'none' : 'auto',
+                transition: 'opacity 0.25s ease, visibility 0.25s ease'
+              }"
+              :inert="!!store.inputText"
+              role="group"
+              aria-label="サンプル文章の選択"
+            >
+              <span class="text-muted small me-1">
+                <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
+              </span>
+              <button
+                v-for="sample in store.samples"
+                :key="sample.id"
+                type="button"
+                class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
+                style="font-size: 0.75rem;"
+                :disabled="store.isSummarizing || store.isRecording || store.isTranscribing"
+                :aria-label="sample.title + 'のサンプル文章を入力'"
+                :title="sample.title + 'を挿入'"
+                @click="handleApplySample(sample)"
+              >
+                <i :class="sample.icon" class="me-1" aria-hidden="true"></i>{{ sample.title }}
+              </button>
+            </div>
           </div>
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
@@ -46,10 +94,39 @@
                   >
                     <i class="bi bi-stop-circle me-1"></i>停止
                   </button>
-                  <span class="badge bg-secondary ms-2 font-monospace">{{ store.formattedRecordTime }}</span>
+                  <div
+                    ref="waveformCanvas"
+                    style="width: 70px; height: 24px; vertical-align: middle;"
+                    class="border rounded bg-body-tertiary mx-1 d-none d-sm-inline-block overflow-hidden pe-none"
+                    aria-hidden="true"
+                  ></div>
+                  <span class="badge bg-secondary ms-1 font-monospace">{{ store.formattedRecordTime }}</span>
                 </template>
-                <div v-if="store.isTranscribing" class="d-inline-flex align-items-center ms-2">
-                  <span class="spinner-border spinner-border-sm text-primary me-1" role="status" aria-hidden="true"></span>
+                <button
+                  v-if="!store.isRecording"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm d-flex align-items-center ms-2"
+                  @click="$refs.audioFileInput.click()"
+                  :disabled="store.isSummarizing || store.isTranscribing"
+                  aria-label="音声ファイルを選択して文字起こし"
+                  title="音声ファイルから文字起こし"
+                >
+                  <i class="bi bi-paperclip me-1" aria-hidden="true"></i>音声ファイル
+                </button>
+                <input
+                  ref="audioFileInput"
+                  type="file"
+                  class="d-none"
+                  accept="audio/*,.mp3,.wav,.m4a,.webm,.ogg,.aac,.flac"
+                  @change="handleFileInputChange"
+                >
+                <div
+                  v-if="store.isTranscribing"
+                  class="d-inline-flex align-items-center ms-2"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span class="spinner-border spinner-border-sm text-primary me-1" aria-hidden="true"></span>
                   <span class="text-muted small">文字起こし中...</span>
                 </div>
               </div>
@@ -114,6 +191,23 @@
         <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
           <h5 class="mb-0 fw-semibold">要約結果</h5>
           <div class="d-flex align-items-center gap-2 d-print-none">
+            <!-- 表示形式切り替えボタングループ -->
+            <div class="btn-group btn-group-sm me-2" role="group" aria-label="表示形式切り替え">
+              <button
+                type="button"
+                class="btn"
+                :class="viewMode === 'preview' ? 'btn-primary' : 'btn-outline-secondary'"
+                :aria-pressed="viewMode === 'preview'"
+                @click="viewMode = 'preview'"
+              >プレビュー</button>
+              <button
+                type="button"
+                class="btn"
+                :class="viewMode === 'raw' ? 'btn-primary' : 'btn-outline-secondary'"
+                :aria-pressed="viewMode === 'raw'"
+                @click="viewMode = 'raw'"
+              >生テキスト</button>
+            </div>
             <!-- ダウンロードドロップダウン -->
             <div class="dropdown">
               <button
@@ -124,17 +218,22 @@
                 aria-expanded="false"
                 :disabled="!store.resultText || store.isSummarizing"
               >
-                <i class="bi bi-download me-1"></i>ダウンロード
+                <i class="bi bi-download me-1" aria-hidden="true"></i>ダウンロード
               </button>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="downloadDropdown">
                 <li>
+                  <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadMd">
+                    <i class="bi bi-markdown me-2" aria-hidden="true"></i>Markdown (.md)
+                  </button>
+                </li>
+                <li>
                   <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadText">
-                    <i class="bi bi-file-earmark-text me-2"></i>テキスト (.txt)
+                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>テキスト (.txt)
                   </button>
                 </li>
                 <li>
                   <button class="dropdown-item d-flex align-items-center" type="button" @click="downloadPdf">
-                    <i class="bi bi-printer me-2"></i>印刷 / PDF保存 (.pdf)
+                    <i class="bi bi-printer me-2" aria-hidden="true"></i>印刷 / PDF保存 (.pdf)
                   </button>
                 </li>
               </ul>
@@ -145,7 +244,7 @@
               @click="handleCopy"
               :disabled="!store.resultText"
             >
-              <i class="bi bi-clipboard-check me-1"></i>コピー
+              <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>コピー
             </button>
           </div>
         </div>
@@ -154,9 +253,15 @@
             {{ store.errorMessage }}
           </div>
           <div
+            v-else-if="viewMode === 'preview' && store.resultText"
+            class="markdown-body p-3 rounded bg-body-tertiary border"
+            style="min-height: 140px;"
+            v-html="renderedMarkdown"
+          ></div>
+          <div
             v-else
-            class="p-3 rounded bg-body-tertiary border"
-            style="min-height: 140px; white-space: pre-wrap;"
+            class="p-3 rounded bg-body-tertiary border font-monospace"
+            style="min-height: 140px; white-space: pre-wrap; font-size: 0.9rem;"
           >{{ store.resultText || 'ここに要約結果が表示されます…' }}</div>
         </div>
       </div>

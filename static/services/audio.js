@@ -164,3 +164,8 @@ export function stopRecording() {
 
   return stopPromise;
 }
+
+// アクティブなマイクストリームの取得
+export function getActiveStream() {
+  return audioStream;
+}
