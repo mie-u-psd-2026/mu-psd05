@@ -152,6 +152,15 @@ def submit():
             "error": str(e)
         }), 500
 
+# ==========================================
+# `/`: ルートをstatic/へ転送する
+# ==========================================
+
+from flask import redirect, url_for
+
+@app.route('/')
+def index():
+    return redirect(url_for('static', filename='index.html'))
 
 # ==========================================
 # Flask起動
