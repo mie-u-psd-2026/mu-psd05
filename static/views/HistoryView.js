@@ -1,4 +1,5 @@
 import store, { SUMMARY_STYLES } from '../store.js';
+import { loadTemplate } from '../services/templateLoader.js';
 
 export default {
   name: 'HistoryView',
@@ -85,112 +86,5 @@ export default {
     document.body.style.removeProperty('overflow');
     document.body.style.removeProperty('padding-right');
   },
-  template: `
-    <div class="container-fluid p-0">
-      <!-- 履歴一覧カード -->
-      <div class="card shadow-sm border">
-        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-          <h5 class="mb-0 fw-semibold">要約履歴一覧</h5>
-          <span class="badge bg-secondary">{{ store.histories.length }}件</span>
-        </div>
-
-        <!-- 処理実行中の事前案内バナー -->
-        <div
-          v-if="isProcessing"
-          class="alert alert-warning py-2 px-3 mb-0 border-0 border-bottom rounded-0 d-flex align-items-center small"
-          role="status"
-        >
-          <span class="spinner-border spinner-border-sm me-2 flex-shrink-0" role="status" aria-hidden="true"></span>
-          <span>メイン画面で{{ store.isSummarizing ? '要約' : '文字起こし' }}処理が実行中です。完了するまで履歴の復元は制限されます。</span>
-        </div>
-
-        <div class="card-body p-0">
-          <!-- 0件の場合 -->
-          <div v-if="store.histories.length === 0" class="text-center text-muted py-5">
-            <i class="bi bi-clock-history fs-1"></i>
-            <p class="mt-2 mb-0">履歴はありません</p>
-          </div>
-
-          <!-- 1件以上の場合 -->
-          <div v-else class="list-group list-group-flush">
-            <div
-              v-for="item in store.histories"
-              :key="item.id"
-              class="list-group-item d-flex justify-content-between align-items-center py-3"
-              :class="{ 'list-group-item-action': !isProcessing }"
-            >
-              <div
-                class="flex-grow-1 me-3 overflow-hidden"
-                :class="isProcessing ? 'opacity-50' : 'cursor-pointer'"
-                :style="isProcessing ? 'cursor: not-allowed;' : ''"
-                role="button"
-                tabindex="0"
-                :aria-disabled="isProcessing"
-                :aria-label="\`履歴を復元: \${getStyleInfo(item.selectedStyle).name} (\${formatDate(item.createdAt)})\${isProcessing ? '（現在処理中のため選択不可）' : ''}\`"
-                @click="handleSelect(item)"
-                @keydown.enter="handleSelect(item)"
-                @keydown.space.prevent="handleSelect(item)"
-              >
-                <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
-                  <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center">
-                    <i :class="getStyleInfo(item.selectedStyle).icon" class="me-1"></i>
-                    {{ getStyleInfo(item.selectedStyle).name }}
-                  </span>
-                  <small class="text-muted">{{ formatDate(item.createdAt) }}</small>
-                </div>
-                <div
-                  class="text-body small"
-                  style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;"
-                >
-                  {{ item.resultText || item.inputText || '（内容なし）' }}
-                </div>
-              </div>
-              <div>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-danger ms-3"
-                  @click.stop="openDeleteModal(item)"
-                  title="削除"
-                  aria-label="この要約履歴を削除"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 削除確認モーダル -->
-      <div
-        class="modal fade"
-        ref="deleteModalRef"
-        tabindex="-1"
-        aria-labelledby="deleteModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="deleteModalLabel">履歴の削除</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <p class="mb-2">この要約履歴を削除してもよろしいですか？この操作は取り消せません。</p>
-              <div v-if="itemToDelete" class="bg-light p-2 rounded small text-muted border">
-                <div class="fw-semibold mb-1">{{ formatDate(itemToDelete.createdAt) }}</div>
-                <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                  {{ itemToDelete.resultText || itemToDelete.inputText }}
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-              <button type="button" class="btn btn-danger" @click="confirmDelete">削除する</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `
+  template: await loadTemplate(import.meta.url, './HistoryView.html')
 };
