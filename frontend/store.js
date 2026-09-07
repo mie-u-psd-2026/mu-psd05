@@ -195,21 +195,12 @@ const store = reactive({
     }
   },
 
-  // 録音停止と文字起こし実行
-  async stopRecordingAndTranscribe() {
-    if (!this.isRecording) {
-      return;
-    }
-    this.isRecording = false;
+  // 文字起こし実行の共通内部ヘルパー
+  async _runTranscription(audioBlobOrFile) {
     this.isTranscribing = true;
     const startTime = Date.now();
     try {
-      const blob = await audio.stopRecording();
-      if (!blob || blob.size === 0) {
-        this.showToast('録音時間が短すぎるため破棄しました', 'info');
-        return;
-      }
-      const text = await api.transcribeAudio(blob);
+      const text = await api.transcribeAudio(audioBlobOrFile);
       if (text && text.trim()) {
         this.lastTranscribeTimeMs = Date.now() - startTime;
         this.handleTranscriptionSuccess(text);
@@ -224,6 +215,30 @@ const store = reactive({
       this.isTranscribing = false;
       this.recordSeconds = 0;
     }
+  },
+
+  // 録音停止と文字起こし実行
+  async stopRecordingAndTranscribe() {
+    if (!this.isRecording) {
+      return;
+    }
+    this.isRecording = false;
+    let blob;
+    try {
+      blob = await audio.stopRecording();
+    } catch (err) {
+      this.recordSeconds = 0;
+      this.showToast('録音の停止に失敗しました: ' + err.message, 'danger');
+      return;
+    }
+
+    if (!blob || blob.size === 0) {
+      this.recordSeconds = 0;
+      this.showToast('録音時間が短すぎるため破棄しました', 'info');
+      return;
+    }
+
+    await this._runTranscription(blob);
   },
 
   // 音声ファイルの文字起こし
@@ -251,23 +266,7 @@ const store = reactive({
       return;
     }
 
-    this.isTranscribing = true;
-    const startTime = Date.now();
-    try {
-      const text = await api.transcribeAudio(file);
-      if (text && text.trim()) {
-        this.lastTranscribeTimeMs = Date.now() - startTime;
-        this.handleTranscriptionSuccess(text);
-      } else {
-        this.lastTranscribeTimeMs = null;
-        this.showToast('音声を認識できませんでした', 'info');
-      }
-    } catch (err) {
-      this.lastTranscribeTimeMs = null;
-      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
-    } finally {
-      this.isTranscribing = false;
-    }
+    await this._runTranscription(file);
   },
 
   // 要約実行
