@@ -44,8 +44,7 @@
             <!-- サンプル文章サジェストチップ -->
             <transition name="fade">
               <div
-                v-if="store.samples && store.samples.length > 0"
-                v-show="!store.inputText"
+                v-if="!store.inputText && store.samples && store.samples.length > 0"
                 class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
                 role="group"
                 aria-label="サンプル文章の選択"
