@@ -17,7 +17,7 @@
         >
           <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2"></i>
           <p class="fw-semibold text-primary mb-0">ここに音声ファイルをドロップして文字起こし</p>
-          <span class="text-muted small mt-1">.mp3, .wav, .m4a, .webm, .ogg, .aac, .flac (最大100MB)</span>
+          <span class="text-body-secondary small mt-1">.mp3, .wav, .m4a, .webm, .ogg, .aac, .flac (最大100MB)</span>
         </div>
 
         <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
@@ -49,7 +49,7 @@
                 role="group"
                 aria-label="サンプル文章の選択"
               >
-                <span class="text-muted small me-1">
+                <span class="text-body-secondary small me-1">
                   <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
                 </span>
                 <button
@@ -70,10 +70,10 @@
           </div>
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
-              <span class="text-muted small">{{ store.inputText.length }}文字</span>
+              <span class="text-body-secondary small">{{ store.inputText.length }}文字</span>
               <span
                 v-if="store.lastTranscribeTimeMs !== null"
-                class="text-muted small ms-2"
+                class="text-body-secondary small ms-2"
               >文字起こし: {{ formatDuration(store.lastTranscribeTimeMs) }}</span>
               <div class="d-inline-flex align-items-center ms-2">
                 <button
@@ -126,7 +126,7 @@
                   aria-live="polite"
                 >
                   <span class="spinner-border spinner-border-sm text-primary me-1" aria-hidden="true"></span>
-                  <span class="text-muted small">文字起こし中...</span>
+                  <span class="text-body-secondary small">文字起こし中...</span>
                 </div>
               </div>
             </div>
@@ -272,7 +272,7 @@
         </div>
         <div
           v-if="store.lastSummarizeTimeMs !== null"
-          class="card-footer bg-transparent text-muted small py-2 d-print-none"
+          class="card-footer bg-transparent text-body-secondary small py-2 d-print-none"
         >要約: {{ formatDuration(store.lastSummarizeTimeMs) }}</div>
       </div>
     </div>

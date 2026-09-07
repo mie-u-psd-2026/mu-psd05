@@ -91,7 +91,8 @@ export default {
           </div>
           <button
             type="button"
-            class="btn-close btn-close-white me-2 m-auto"
+            class="btn-close me-2 m-auto"
+            data-bs-theme="dark"
             data-bs-dismiss="toast"
             aria-label="Close"
           ></button>
