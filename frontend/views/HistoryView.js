@@ -1,6 +1,8 @@
 import store, { SUMMARY_STYLES } from '../store.js';
 import { loadTemplate } from '../services/templateLoader.js';
 
+const dateFormatter = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' });
+
 export default {
   name: 'HistoryView',
   data() {
@@ -26,7 +28,7 @@ export default {
       const d = new Date(timestamp);
       if (isNaN(d.getTime())) return '';
       try {
-        return new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+        return dateFormatter.format(d);
       } catch (_) {
         return '';
       }
