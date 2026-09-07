@@ -42,6 +42,9 @@ export default {
     async handlePaste() {
       try {
         const text = await navigator.clipboard.readText();
+        if (!text) {
+          return;
+        }
         this.store.inputText = text;
         this.store.setDraft();
       } catch (err) {
