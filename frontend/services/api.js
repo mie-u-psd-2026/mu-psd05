@@ -94,9 +94,14 @@ export async function transcribeAudio(audioBlob, timeoutMs = 180000) {
     throw new Error('文字起こし対象の音声データが不正です');
   }
 
-  const filename = (typeof audioBlob.name === 'string' && audioBlob.name)
+  let filename = (typeof audioBlob.name === 'string' && audioBlob.name)
     ? audioBlob.name
     : `record.${getAudioExtension(audioBlob)}`;
+
+  // ファイル名に拡張子が含まれていない場合、MIMEタイプから適切な拡張子を補完
+  if (!/\.[a-zA-Z0-9]+$/.test(filename)) {
+    filename = `${filename}.${getAudioExtension(audioBlob)}`;
+  }
 
   const formData = new FormData();
   formData.append('audio', audioBlob, filename);
