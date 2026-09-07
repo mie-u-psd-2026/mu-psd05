@@ -152,6 +152,11 @@ export default {
         this.store.transcribeAudioFile(files[0]);
       }
       input.value = '';
+    },
+    // 所要時間（ミリ秒）を人間が読みやすい形式に整形
+    formatDuration(ms) {
+      if (typeof ms !== 'number' || isNaN(ms) || ms < 0) return '';
+      return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
     }
   },
   watch: {

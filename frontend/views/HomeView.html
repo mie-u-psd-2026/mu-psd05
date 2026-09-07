@@ -75,7 +75,7 @@
               <span
                 v-if="store.lastTranscribeTimeMs !== null"
                 class="text-muted small ms-2"
-              >文字起こし: {{ store.lastTranscribeTimeMs < 1000 ? store.lastTranscribeTimeMs + 'ms' : (store.lastTranscribeTimeMs / 1000).toFixed(1) + 's' }}</span>
+              >文字起こし: {{ formatDuration(store.lastTranscribeTimeMs) }}</span>
               <div class="d-inline-flex align-items-center ms-2">
                 <button
                   v-if="!store.isRecording"
@@ -273,7 +273,7 @@
         <div
           v-if="store.lastSummarizeTimeMs !== null"
           class="card-footer bg-transparent text-muted small py-2 d-print-none"
-        >要約: {{ store.lastSummarizeTimeMs < 1000 ? store.lastSummarizeTimeMs + 'ms' : (store.lastSummarizeTimeMs / 1000).toFixed(1) + 's' }}</div>
+        >要約: {{ formatDuration(store.lastSummarizeTimeMs) }}</div>
       </div>
     </div>
   </div>
