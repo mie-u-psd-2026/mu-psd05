@@ -296,7 +296,7 @@ const store = reactive({
       });
 
       this.historyItems.unshift(item);
-      if (this.historyItems.length > 100) {
+      if (this.historyItems.length > storage.MAX_HISTORY_ITEMS) {
         this.historyItems.pop();
       }
 
