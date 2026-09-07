@@ -12,7 +12,7 @@ export const STYLE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7日間
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
 
 // ID生成ヘルパー
-function generateId() {
+export function generateId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }

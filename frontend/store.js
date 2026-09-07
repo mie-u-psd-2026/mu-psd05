@@ -315,7 +315,7 @@ const store = reactive({
     this.toast.message = message;
     this.toast.variant = variant;
     this.toast.show = true;
-    this.toast.id = crypto.randomUUID();
+    this.toast.id = storage.generateId();
   }
 });
 
