@@ -296,6 +296,7 @@ const store = reactive({
 
   // 履歴をメイン入力へ反映
   loadHistoryToMain(item) {
+    this.errorMessage = '';
     this.inputText = item.inputText || '';
     this.resultText = item.resultText || '';
     const styleCandidate = item.selectedStyle;
