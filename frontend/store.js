@@ -160,6 +160,8 @@ const store = reactive({
     if (this.isRecording || this.isSummarizing || this.isTranscribing) {
       return;
     }
+    this.isRecording = true;
+    this.recordSeconds = 0;
     try {
       await audio.startRecording({
         onTick: () => {
@@ -170,9 +172,9 @@ const store = reactive({
           this.cancelRecording();
         }
       });
-      this.isRecording = true;
-      this.recordSeconds = 0;
     } catch (err) {
+      this.isRecording = false;
+      this.recordSeconds = 0;
       this.showToast('マイクが利用できません: ' + err.message, 'danger');
     }
   },
