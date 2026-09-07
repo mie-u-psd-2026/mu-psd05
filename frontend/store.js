@@ -65,21 +65,20 @@ const store = reactive({
 
   // 初期化処理
   async init() {
-    storage.cleanupExpiredData();
-    this.historyItems = storage.getHistories();
+    this.historyItems = storage.getHistory();
 
     const savedStyle = storage.getSelectedStyle();
     if (savedStyle && SUMMARY_STYLES.some(s => s.id === savedStyle)) {
       this.selectedStyle = savedStyle;
     }
 
-    const draft = storage.loadDraft();
-    if (draft) {
-      if (typeof draft.inputText === 'string') {
-        this.inputText = draft.inputText;
+    const sessionState = storage.loadSessionState();
+    if (sessionState) {
+      if (typeof sessionState.inputText === 'string') {
+        this.inputText = sessionState.inputText;
       }
-      if (typeof draft.resultText === 'string') {
-        this.resultText = draft.resultText;
+      if (typeof sessionState.resultText === 'string') {
+        this.resultText = sessionState.resultText;
       }
     }
 
@@ -106,7 +105,7 @@ const store = reactive({
       return;
     }
     this.inputText = sample.text;
-    this.setDraft();
+    this.setSessionState();
     // this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
   },
 
@@ -127,12 +126,12 @@ const store = reactive({
     if (this.isRecording) {
       this.cancelRecording();
     }
-    storage.clearDraft();
+    storage.clearSessionState();
   },
 
-  // 下書き保存
-  setDraft() {
-    storage.saveDraft({
+  // セッション状態保存
+  setSessionState() {
+    storage.saveSessionState({
       inputText: this.inputText,
       resultText: this.resultText
     });
@@ -141,7 +140,7 @@ const store = reactive({
   // 音声認識成功時の共通処理
   handleTranscriptionSuccess(text) {
     this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
-    this.setDraft();
+    this.setSessionState();
     this.showToast('文字起こしが完了しました', 'success');
   },
 
@@ -285,7 +284,7 @@ const store = reactive({
         this.historyItems.pop();
       }
 
-      this.setDraft();
+      this.setSessionState();
       this.lastSummarizeTimeMs = Date.now() - startTime;
       this.showToast('要約が完了しました', 'success');
     } catch (err) {
@@ -313,7 +312,7 @@ const store = reactive({
     this.selectedStyle = (styleCandidate && SUMMARY_STYLES.some(s => s.id === styleCandidate))
       ? styleCandidate
       : 'short';
-    this.setDraft();
+    this.setSessionState();
   },
 
   // トースト表示
