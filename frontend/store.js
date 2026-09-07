@@ -121,6 +121,11 @@ const store = reactive({
     this.inputText = '';
     this.resultText = '';
     this.errorMessage = '';
+    this.lastTranscribeTimeMs = null;
+    this.lastSummarizeTimeMs = null;
+    if (this.isRecording) {
+      this.cancelRecording();
+    }
     storage.clearDraft();
   },
 
