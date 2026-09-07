@@ -53,23 +53,22 @@ function readHistoryRecord() {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (!raw) {
-      return { items: [], lastAccessedAt: Date.now() };
+      return { items: [] };
     }
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.items)) {
       const validItems = parsed.items.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
-      const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : Date.now();
-      return { items: validItems, lastAccessedAt: lastAccessed };
+      return { items: validItems };
     }
     // 生配列データが存在した場合の後方互換フォールバック
     if (Array.isArray(parsed)) {
       const validItems = parsed.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
-      return { items: validItems, lastAccessedAt: Date.now() };
+      return { items: validItems };
     }
-    return { items: [], lastAccessedAt: Date.now() };
+    return { items: [] };
   } catch (error) {
     console.error('履歴データの読み込みに失敗しました:', error);
-    return { items: [], lastAccessedAt: Date.now() };
+    return { items: [] };
   }
 }
 
@@ -97,7 +96,6 @@ export function saveHistory({ inputText, resultText, selectedStyle }) {
   if (record.items.length > MAX_HISTORY_ITEMS) {
     record.items = record.items.slice(0, MAX_HISTORY_ITEMS);
   }
-  record.lastAccessedAt = Date.now();
   writeHistoryRecord(record);
 
   return newItem;
@@ -113,8 +111,15 @@ export function getHistories() {
 export function deleteHistory(id) {
   const record = readHistoryRecord();
   record.items = record.items.filter(item => item.id !== id);
-  record.lastAccessedAt = Date.now();
   writeHistoryRecord(record);
+}
+
+// スタイルの有効期限判定ヘルパー
+export function isStyleExpired(createdAt) {
+  if (!createdAt || typeof createdAt !== 'number') {
+    return false;
+  }
+  return Date.now() - createdAt > STYLE_TTL_MS;
 }
 
 // 選択スタイル保存
@@ -139,7 +144,7 @@ export function getSelectedStyle() {
     if (!parsed || typeof parsed.styleId !== 'string') return null;
 
     const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : null;
-    if (lastAccessed && (Date.now() - lastAccessed > STYLE_TTL_MS)) {
+    if (isStyleExpired(lastAccessed)) {
       localStorage.removeItem(STYLE_KEY);
       return null;
     }
@@ -152,15 +157,13 @@ export function getSelectedStyle() {
 
 // 期限切れデータクリーンアップ
 export function cleanupExpiredData() {
-  const now = Date.now();
-
   // スタイル設定クリーンアップ（7日アクセスなし）
   try {
     const styleRaw = localStorage.getItem(STYLE_KEY);
     if (styleRaw) {
       const styleRecord = JSON.parse(styleRaw);
       const lastAccessed = typeof styleRecord?.lastAccessedAt === 'number' ? styleRecord.lastAccessedAt : null;
-      if (lastAccessed && (now - lastAccessed > STYLE_TTL_MS)) {
+      if (isStyleExpired(lastAccessed)) {
         localStorage.removeItem(STYLE_KEY);
       }
     }

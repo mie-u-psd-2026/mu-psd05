@@ -11,8 +11,8 @@
         <!-- ドラッグ&ドロップ オーバーレイUI -->
         <div
           v-if="isDragging"
-          class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded z-3"
-          style="border: 2px dashed var(--bs-primary); pointer-events: none;"
+          class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded z-3 pe-none"
+          style="border: 2px dashed var(--bs-primary);"
           aria-hidden="true"
         >
           <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2"></i>
@@ -42,36 +42,32 @@
               :disabled="store.isSummarizing"
             ></textarea>
             <!-- サンプル文章サジェストチップ -->
-            <div
-              v-if="store.samples && store.samples.length > 0"
-              class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
-              :style="{
-                opacity: store.inputText ? 0 : 1,
-                visibility: store.inputText ? 'hidden' : 'visible',
-                pointerEvents: store.inputText ? 'none' : 'auto',
-                transition: 'opacity 0.25s ease, visibility 0.25s ease'
-              }"
-              :inert="!!store.inputText"
-              role="group"
-              aria-label="サンプル文章の選択"
-            >
-              <span class="text-muted small me-1">
-                <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
-              </span>
-              <button
-                v-for="sample in store.samples"
-                :key="sample.id"
-                type="button"
-                class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
-                style="font-size: 0.75rem;"
-                :disabled="store.isSummarizing || store.isRecording || store.isTranscribing"
-                :aria-label="sample.title + 'のサンプル文章を入力'"
-                :title="sample.title + 'を挿入'"
-                @click="handleApplySample(sample)"
+            <transition name="fade">
+              <div
+                v-if="store.samples && store.samples.length > 0"
+                v-show="!store.inputText"
+                class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
+                role="group"
+                aria-label="サンプル文章の選択"
               >
-                <i :class="sample.icon" class="me-1" aria-hidden="true"></i>{{ sample.title }}
-              </button>
-            </div>
+                <span class="text-muted small me-1">
+                  <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
+                </span>
+                <button
+                  v-for="sample in store.samples"
+                  :key="sample.id"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
+                  style="font-size: 0.75rem;"
+                  :disabled="store.isSummarizing || store.isRecording || store.isTranscribing"
+                  :aria-label="sample.title + 'のサンプル文章を入力'"
+                  :title="sample.title + 'を挿入'"
+                  @click="handleApplySample(sample)"
+                >
+                  <i :class="sample.icon" class="me-1" aria-hidden="true"></i>{{ sample.title }}
+                </button>
+              </div>
+            </transition>
           </div>
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
@@ -161,7 +157,7 @@
             <div
               v-for="style in styles"
               :key="style.id"
-              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer py-3"
+              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
               :class="{ active: store.selectedStyle === style.id }"
               @click="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
               @keydown.enter="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
@@ -197,20 +193,26 @@
           <div class="d-flex align-items-center gap-2 d-print-none">
             <!-- 表示形式切り替えボタングループ -->
             <div class="btn-group btn-group-sm me-2" role="group" aria-label="表示形式切り替え">
-              <button
-                type="button"
-                class="btn"
-                :class="viewMode === 'preview' ? 'btn-primary' : 'btn-outline-secondary'"
-                :aria-pressed="viewMode === 'preview'"
-                @click="viewMode = 'preview'"
-              >プレビュー</button>
-              <button
-                type="button"
-                class="btn"
-                :class="viewMode === 'raw' ? 'btn-primary' : 'btn-outline-secondary'"
-                :aria-pressed="viewMode === 'raw'"
-                @click="viewMode = 'raw'"
-              >生テキスト</button>
+              <input
+                type="radio"
+                class="btn-check"
+                name="viewMode"
+                id="viewModePreview"
+                value="preview"
+                v-model="viewMode"
+                autocomplete="off"
+              >
+              <label class="btn btn-outline-primary" for="viewModePreview">プレビュー</label>
+              <input
+                type="radio"
+                class="btn-check"
+                name="viewMode"
+                id="viewModeRaw"
+                value="raw"
+                v-model="viewMode"
+                autocomplete="off"
+              >
+              <label class="btn btn-outline-primary" for="viewModeRaw">生テキスト</label>
             </div>
             <!-- ダウンロードドロップダウン -->
             <div class="dropdown">

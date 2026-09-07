@@ -50,19 +50,25 @@ const store = reactive({
   lastTranscribeTimeMs: null,
   lastSummarizeTimeMs: null,
   errorMessage: '',
-  histories: [],
+  historyItems: [],
+  get histories() {
+    return this.historyItems;
+  },
+  set histories(val) {
+    this.historyItems = val;
+  },
   samples: [],
   toast: {
     show: false,
     message: '',
     variant: 'primary',
-    timestamp: 0
+    id: null
   },
 
   // 初期化処理
   async init() {
     storage.cleanupExpiredData();
-    this.histories = storage.getHistories();
+    this.historyItems = storage.getHistories();
 
     const savedStyle = storage.getSelectedStyle();
     if (savedStyle && SUMMARY_STYLES.some(s => s.id === savedStyle)) {
@@ -126,6 +132,18 @@ const store = reactive({
     });
   },
 
+  // 下書き保存（互換用エイリアス）
+  saveDraft() {
+    this.setDraft();
+  },
+
+  // 音声認識成功時の共通処理
+  handleTranscriptionSuccess(text) {
+    this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
+    this.setDraft();
+    this.showToast('文字起こしが完了しました', 'success');
+  },
+
   // 録音のキャンセル・中断（文字起こしは実行せずリソースのみ解放）
   async cancelRecording() {
     this.isRecording = false;
@@ -171,10 +189,8 @@ const store = reactive({
       const blob = await audio.stopRecording();
       const text = await api.transcribeAudio(blob);
       if (text) {
-        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
-        this.setDraft();
         this.lastTranscribeTimeMs = Date.now() - startTime;
-        this.showToast('文字起こしが完了しました', 'success');
+        this.handleTranscriptionSuccess(text);
       }
     } catch (err) {
       this.lastTranscribeTimeMs = null;
@@ -215,10 +231,8 @@ const store = reactive({
     try {
       const text = await api.transcribeAudio(file);
       if (text) {
-        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
-        this.setDraft();
         this.lastTranscribeTimeMs = Date.now() - startTime;
-        this.showToast('文字起こしが完了しました', 'success');
+        this.handleTranscriptionSuccess(text);
       }
     } catch (err) {
       this.lastTranscribeTimeMs = null;
@@ -254,9 +268,9 @@ const store = reactive({
         selectedStyle: targetStyle
       });
 
-      this.histories.unshift(item);
-      if (this.histories.length > 100) {
-        this.histories.pop();
+      this.historyItems.unshift(item);
+      if (this.historyItems.length > 100) {
+        this.historyItems.pop();
       }
 
       this.setDraft();
@@ -274,7 +288,7 @@ const store = reactive({
   // 履歴アイテム削除
   deleteHistoryItem(id) {
     storage.deleteHistory(id);
-    this.histories = this.histories.filter(h => h.id !== id);
+    this.historyItems = this.historyItems.filter(h => h.id !== id);
     this.showToast('履歴を削除しました', 'info');
   },
 
@@ -294,7 +308,7 @@ const store = reactive({
     this.toast.message = message;
     this.toast.variant = variant;
     this.toast.show = true;
-    this.toast.timestamp = Date.now();
+    this.toast.id = crypto.randomUUID();
   }
 });
 

@@ -33,7 +33,7 @@ export default {
   },
   watch: {
     // DOM更新完了後にコールバックを実行するため flush: 'post' を指定
-    'store.toast.timestamp': {
+    'store.toast.id': {
       handler() {
         this.triggerToast();
       },

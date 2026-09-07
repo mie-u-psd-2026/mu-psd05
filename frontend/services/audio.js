@@ -77,7 +77,7 @@ export async function startRecording({ onTick, onError } = {}) {
       }
     };
 
-    recorder.start(250);
+    recorder.start();
 
     recordTimer = setInterval(() => {
       if (typeof onTick === 'function') {
