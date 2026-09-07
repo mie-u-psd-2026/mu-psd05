@@ -2,17 +2,17 @@
 
 ## 画面一覧
 
-| path    | 画面名       | 内容                   |
-| ------- | ------------ | ---------------------- |
-| lp      | メインページ | 入力、文字起こし、要約 |
-| history | 履歴ページ   | 過去の要約履歴の表示   |
-| about   | Aboutページ  | アプリ情報およびライブラリ情報の表示 |
+| path     | 画面名       | 内容                 |
+| -------- | ------------ | -------------------- |
+| /        | メインページ | 文字起こしと要約機能 |
+| history/ | 履歴ページ   | 要約履歴             |
+| about/   | Aboutページ  | 名称とライブラリ情報 |
 
 ## ワイヤーフレーム
 
-- [原案はGoogle StichのGemini 3 Flashで生成](https://stitch.withgoogle.com/projects/3631107852532038161)
-- [下の画像はここ](https://www.figma.com/design/HadISp7mILQ9y12FlT21M4/psd2026-05?node-id=7-3&t=iDnCa2m8Epm5bL0z-1)
-- 以下は枠組みのみを表したもので、実際にはライブラリのデザインで似たようなものをそのまま使う。
+- [原案はGoogle StichのGemini 3 Flashで生成しています](https://stitch.withgoogle.com/projects/3631107852532038161)
+- [以下で使われている画像はFigma上で見ようみまねで作成しました](https://www.figma.com/design/HadISp7mILQ9y12FlT21M4/psd2026-05?node-id=7-3&t=iDnCa2m8Epm5bL0z-1)
+- 以下は枠組みのみを表したもので、実際にはライブラリのデザインで似たようなものをそのまま使う
   - _nani gigantum umeris insidentes_
 
 ### メインページ
@@ -38,6 +38,7 @@
 | Error   | トーストか通知で削除失敗の旨を表示                                                                                            |              |
 
 必要となるbackend用のコマンド
+
 ```JSON
 pip install flask requests faster-whisper
 ollama pull qwen3.5:0.8b
