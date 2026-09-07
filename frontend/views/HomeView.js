@@ -52,7 +52,7 @@ export default {
           return;
         }
         this.store.inputText = text;
-        this.store.setDraft();
+        this.store.setSessionState();
       } catch (err) {
         this.store.showToast('クリップボードの読み取りに失敗しました', 'danger');
       }
@@ -92,7 +92,7 @@ export default {
       }
       this.viewMode = 'preview';
       this.$nextTick(() => {
-        download.printAsPdf();
+        download.triggerPrint();
       });
     },
     // サンプル文章の適用とフォーカス移動
