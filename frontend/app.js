@@ -11,9 +11,6 @@ store.init();
 
 const app = createApp({});
 
-// 全コンポーネントからアクセス可能なプロパティとして登録
-app.config.globalProperties.$store = store;
-
 // グローバルカスタムディレクティブ登録
 app.directive('popover', vPopover);
 
