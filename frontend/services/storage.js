@@ -3,15 +3,7 @@ export const DRAFT_KEY = 'summarizer_draft';
 export const HISTORY_KEY = 'summarizer_history';
 export const STYLE_KEY = 'summarizer_style';
 
-// 有効期限および件数上限定数
-/**
- * @deprecated 履歴の14日間TTL削除仕様の撤廃に伴い非推奨。後方互換性のために保持。
- */
-export const HISTORY_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14日間
-/**
- * @deprecated スタイル設定の7日間TTL仕様の撤廃に伴い非推奨。後方互換性のために保持。
- */
-export const STYLE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7日間
+// 件数上限定数
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
 
 // ID生成ヘルパー

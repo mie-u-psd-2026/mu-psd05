@@ -55,12 +55,6 @@ const store = reactive({
   lastSummarizeTimeMs: null,
   errorMessage: '',
   historyItems: [],
-  get histories() {
-    return this.historyItems;
-  },
-  set histories(val) {
-    this.historyItems = val;
-  },
   samples: [],
   toast: {
     show: false,
@@ -87,10 +81,6 @@ const store = reactive({
       if (typeof draft.resultText === 'string') {
         this.resultText = draft.resultText;
       }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.store = this;
     }
 
     // サンプル文章データの非同期読み込み
@@ -146,11 +136,6 @@ const store = reactive({
       inputText: this.inputText,
       resultText: this.resultText
     });
-  },
-
-  // 下書き保存（互換用エイリアス）
-  saveDraft() {
-    this.setDraft();
   },
 
   // 音声認識成功時の共通処理

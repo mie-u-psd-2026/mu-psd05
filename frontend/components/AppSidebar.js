@@ -3,7 +3,6 @@ import { loadTemplate } from '../services/templateLoader.js';
 
 export default {
   name: 'AppSidebar',
-  emits: ['new-summary'],
   data() {
     return {
       store
@@ -17,7 +16,6 @@ export default {
       if (this.store) {
         this.store.resetCurrentSummary();
       }
-      this.$emit('new-summary');
       if (this.$route.path !== '/') {
         this.$router.push('/');
       }
