@@ -158,9 +158,9 @@
               v-for="style in styles"
               :key="style.id"
               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
-              :class="{ active: store.selectedStyle === style.id }"
-              @click="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
-              @keydown.enter="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
+              :class="{ active: store.selectedStyle === style.id, disabled: store.isSummarizing }"
+              @click="!store.isSummarizing && (store.selectedStyle = style.id, storage.saveSelectedStyle(style.id))"
+              @keydown.enter="!store.isSummarizing && (store.selectedStyle = style.id, storage.saveSelectedStyle(style.id))"
               role="button"
               tabindex="0"
             >
