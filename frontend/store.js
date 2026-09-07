@@ -47,6 +47,8 @@ const store = reactive({
     const s = (this.recordSeconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   },
+  lastTranscribeTimeMs: null,
+  lastSummarizeTimeMs: null,
   errorMessage: '',
   histories: [],
   samples: [],
@@ -164,15 +166,18 @@ const store = reactive({
     }
     this.isRecording = false;
     this.isTranscribing = true;
+    const startTime = Date.now();
     try {
       const blob = await audio.stopRecording();
       const text = await api.transcribeAudio(blob);
       if (text) {
         this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
         this.setDraft();
+        this.lastTranscribeTimeMs = Date.now() - startTime;
         this.showToast('文字起こしが完了しました', 'success');
       }
     } catch (err) {
+      this.lastTranscribeTimeMs = null;
       this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
     } finally {
       this.isTranscribing = false;
@@ -206,14 +211,17 @@ const store = reactive({
     }
 
     this.isTranscribing = true;
+    const startTime = Date.now();
     try {
       const text = await api.transcribeAudio(file);
       if (text) {
         this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
         this.setDraft();
-        this.showToast('文字が起こし完了しました', 'success');
+        this.lastTranscribeTimeMs = Date.now() - startTime;
+        this.showToast('文字起こしが完了しました', 'success');
       }
     } catch (err) {
+      this.lastTranscribeTimeMs = null;
       this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
     } finally {
       this.isTranscribing = false;
@@ -231,6 +239,7 @@ const store = reactive({
 
     this.isSummarizing = true;
     this.errorMessage = '';
+    const startTime = Date.now();
 
     try {
       const summary = await api.summarizeText({
@@ -251,8 +260,10 @@ const store = reactive({
       }
 
       this.setDraft();
+      this.lastSummarizeTimeMs = Date.now() - startTime;
       this.showToast('要約が完了しました', 'success');
     } catch (err) {
+      this.lastSummarizeTimeMs = null;
       this.errorMessage = err.message || '要約中にエラーが発生しました';
       this.showToast(this.errorMessage, 'danger');
     } finally {

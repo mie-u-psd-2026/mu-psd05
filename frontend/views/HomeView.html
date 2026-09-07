@@ -76,6 +76,10 @@
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
               <span class="text-muted small">{{ store.inputText.length }}文字</span>
+              <span
+                v-if="store.lastTranscribeTimeMs !== null"
+                class="text-muted small ms-2"
+              >文字起こし: {{ store.lastTranscribeTimeMs < 1000 ? store.lastTranscribeTimeMs + 'ms' : (store.lastTranscribeTimeMs / 1000).toFixed(1) + 's' }}</span>
               <div class="d-inline-flex align-items-center ms-2">
                 <button
                   v-if="!store.isRecording"
@@ -264,6 +268,10 @@
             style="min-height: 140px; white-space: pre-wrap; font-size: 0.9rem;"
           >{{ store.resultText || 'ここに要約結果が表示されます…' }}</div>
         </div>
+        <div
+          v-if="store.lastSummarizeTimeMs !== null"
+          class="card-footer bg-transparent text-muted small py-2 d-print-none"
+        >要約: {{ store.lastSummarizeTimeMs < 1000 ? store.lastSummarizeTimeMs + 'ms' : (store.lastSummarizeTimeMs / 1000).toFixed(1) + 's' }}</div>
       </div>
     </div>
   </div>
