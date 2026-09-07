@@ -113,7 +113,7 @@ export default {
         return;
       }
       e.preventDefault();
-      if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
+      if (this.store.isBusy) {
         return;
       }
       if (e.dataTransfer) {
@@ -135,7 +135,7 @@ export default {
       }
       e.preventDefault();
       this.isDragging = false;
-      if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
+      if (this.store.isBusy) {
         return;
       }
       const files = e.dataTransfer?.files;

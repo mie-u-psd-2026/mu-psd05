@@ -40,6 +40,10 @@ const store = reactive({
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
+  // 要約・文字起こし・録音のいずれかが進行中か判定する算出プロパティ
+  get isBusy() {
+    return this.isSummarizing || this.isRecording || this.isTranscribing;
+  },
   recordSeconds: 0,
   // 録音時間のフォーマット表示（MM:SS）
   get formattedRecordTime() {
@@ -162,7 +166,7 @@ const store = reactive({
 
   // 音声録音の開始
   async startRecording() {
-    if (this.isRecording || this.isSummarizing || this.isTranscribing) {
+    if (this.isBusy) {
       return;
     }
     this.isRecording = true;
@@ -219,7 +223,7 @@ const store = reactive({
   async transcribeAudioFile(file) {
     if (!file) return;
 
-    if (this.isSummarizing || this.isRecording || this.isTranscribing) {
+    if (this.isBusy) {
       this.showToast('処理中です。終了してからもう一度操作してください', 'warning');
       return;
     }
@@ -264,7 +268,7 @@ const store = reactive({
     const targetText = this.inputText.trim();
     const targetStyle = this.selectedStyle;
 
-    if (!targetText || this.isSummarizing) {
+    if (!targetText || this.isBusy) {
       return;
     }
 

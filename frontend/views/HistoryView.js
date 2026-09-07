@@ -10,9 +10,9 @@ export default {
     };
   },
   computed: {
-    // 要約または文字起こしの処理実行中判定
+    // 処理実行中判定
     isProcessing() {
-      return this.store.isSummarizing || this.store.isTranscribing;
+      return this.store.isBusy;
     }
   },
   methods: {

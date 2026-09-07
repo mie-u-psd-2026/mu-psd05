@@ -11,7 +11,7 @@ export default {
   },
   methods: {
     handleNewSummary() {
-      if (this.store.isSummarizing || this.store.isTranscribing || this.store.isRecording) {
+      if (this.store.isBusy) {
         return;
       }
       if (this.store) {

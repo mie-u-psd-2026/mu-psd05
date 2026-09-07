@@ -59,7 +59,7 @@
                   type="button"
                   class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
                   style="font-size: 0.75rem;"
-                  :disabled="store.isSummarizing || store.isRecording || store.isTranscribing"
+                  :disabled="store.isBusy"
                   :aria-label="sample.title + 'のサンプル文章を入力'"
                   :title="sample.title + 'を挿入'"
                   @click="handleApplySample(sample)"
@@ -134,7 +134,7 @@
             <button
               type="button"
               class="btn btn-primary px-4 fw-semibold d-flex align-items-center"
-              :disabled="!store.inputText.trim() || store.isSummarizing || store.isRecording || store.isTranscribing"
+              :disabled="!store.inputText.trim() || store.isBusy"
               @click="store.executeSummarize()"
             >
               <span v-if="store.isSummarizing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>

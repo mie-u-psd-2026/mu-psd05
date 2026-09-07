@@ -29,7 +29,7 @@
 
     <!-- 新規要約ボタン -->
     <div class="mb-3 text-center">
-      <button type="button" class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center fw-semibold shadow-sm" @click="handleNewSummary" :disabled="store.isSummarizing || store.isTranscribing || store.isRecording">
+      <button type="button" class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center fw-semibold shadow-sm" @click="handleNewSummary" :disabled="store.isBusy">
         <i class="bi bi-plus-lg me-1"></i>
         <span>新規要約</span>
       </button>
