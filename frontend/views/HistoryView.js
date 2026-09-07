@@ -23,7 +23,13 @@ export default {
     // 日時文字列のフォーマット
     formatDate(timestamp) {
       if (!timestamp) return '';
-      return new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(timestamp));
+      const d = new Date(timestamp);
+      if (isNaN(d.getTime())) return '';
+      try {
+        return new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+      } catch (_) {
+        return '';
+      }
     },
     // 履歴アイテムを選択してメイン画面へ復元
     handleSelect(item) {
