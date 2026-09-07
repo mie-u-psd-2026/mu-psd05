@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 60000;
+const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
 
 // タイムアウトおよびエラーハンドリングを統一した共通JSONリクエスト関数
 async function requestJson(url, options = {}, { timeoutMs = DEFAULT_TIMEOUT_MS, actionName = '処理' } = {}) {
