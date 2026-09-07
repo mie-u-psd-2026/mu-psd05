@@ -11,7 +11,7 @@
 
 ### 2.1 テスト対象
 
-- **フロントエンド**: `static/`（Vue.js 3 SPA、Bootstrap 5.3）
+- **フロントエンド**: `frontend/`（Vue.js 3 SPA、Bootstrap 5.3）
   - `HomeView.js`（要約入力、音声録音・文字起こし、要約スタイル選択、結果出力・ダウンロード）
   - `HistoryView.js`（履歴一覧、履歴復元、個別削除）
   - `AboutView.js`（アプリ情報表示）
