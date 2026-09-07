@@ -10,6 +10,14 @@ import DOMPurify from 'dompurify';
 // GFMおよび改行オプションを有効化
 marked.use({ breaks: true, gfm: true });
 
+// Markdownリンクにtarget="_blank"とrel="noopener noreferrer"を付与してSPA離脱を防止
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A' && node.getAttribute('href')) {
+    node.setAttribute('target', '_blank');
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 export default {
   name: 'HomeView',
   data() {
