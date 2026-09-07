@@ -1,3 +1,4 @@
+// MediaRecorderで音声録音とマイクストリームを管理
 // サポートされている安全なMIMEタイプの判定
 export function getSupportedMimeType() {
   const candidateTypes = [

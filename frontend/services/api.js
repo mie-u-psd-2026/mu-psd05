@@ -1,3 +1,4 @@
+// バックエンドAPIとの通信（音声・テキスト処理リクエスト）を管理
 const DEFAULT_TIMEOUT_MS = 10 * 60 * 1000;
 
 // タイムアウトおよびエラーハンドリングを統一した共通JSONリクエスト関数
@@ -31,8 +32,7 @@ async function requestJson(url, options = {}, { timeoutMs = DEFAULT_TIMEOUT_MS, 
 }
 
 // テキスト要約API呼び出し
-export async function summarizeText({ text, summaryType, timeoutMs } = {}, optionalTimeoutMs) {
-  const effectiveTimeout = optionalTimeoutMs ?? timeoutMs ?? DEFAULT_TIMEOUT_MS;
+export async function summarizeText({ text, summaryType } = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const data = await requestJson(
     '/api/summarize',
     {
@@ -45,7 +45,7 @@ export async function summarizeText({ text, summaryType, timeoutMs } = {}, optio
         summary_type: summaryType
       })
     },
-    { timeoutMs: effectiveTimeout, actionName: '要約処理' }
+    { timeoutMs, actionName: '要約処理' }
   );
 
   return data.summary;
