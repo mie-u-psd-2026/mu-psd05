@@ -1,2 +1,0 @@
-good morning
-good evening

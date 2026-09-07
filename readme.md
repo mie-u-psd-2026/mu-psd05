@@ -1,19 +1,127 @@
 # 生成AI活用サンプルアプリ
 
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?logo=flask&logoColor=white)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vuedotjs&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-qwen3.5:0.8b-black?logo=ollama&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-lightgrey)
+
 # 概要
 
 このアプリはPythonとVue.jsを用いて作られた簡易的な生成AI活用アプリです。
 
-- フロントエンドに、Vue.jsとBootstrap 5.3のCDN版を用いています。
-- バックエンドでは、Python, FlaskとOpenAI APIを用いてローカル起動のOllamaを叩いています。
+ブラウザ上で動作し、録音からの文字起こし、ローカルLLMでの要約、要約履歴機能を持ちます。
 
-# 環境
+- フロントエンド: Vue.jsとBootstrap 5.3のCDN版を用いています。
+- バックエンド: Python, FlaskとOllama APIを用いてローカル起動のOllamaを叩いています。
+
+![](./images/screenshot1.jpeg)
+
+## 📖関連ドキュメント
+
+- [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
+- [Webアプリ画面設計](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
+- [テスト仕様書](./test-spec.md): 機能検証・APIテスト仕様
+
+# 🏗️ アーキテクチャ構成
+
+```mermaid
+flowchart LR
+    subgraph Client["フロントエンド (Vue 3 SPA)"]
+        UI["録音 / 要約 / 履歴UI"]
+    end
+
+    subgraph Backend["バックエンド (Flask :5000)"]
+        API_T["/api/transcribe<br>(音声文字起こしAPI)"]
+        API_S["/api/summarize<br>(テキスト要約API)"]
+        API_Sub["/api/submit<br>(要約送信・保存API)"]
+    end
+
+    subgraph AI["ローカルLLM (Ollama :11434)"]
+        Model["qwen3.5:0.8b"]
+    end
+
+    UI -->|音声データ送信| API_T
+    UI -->|要約リクエスト| API_S
+    UI -->|要約データ送信| API_Sub
+    API_S -->|Generate API| Model
+```
+
+# 🔧実行方法（開発用）
+
+Requirements:
+
+- Git
+- Python >= 3.13
+- Ollama
+
+### 1. リポジトリをclone
+
+```sh
+git clone https://github.com/mie-u-psd-2026/mu-psd05
+cd mu-psd05
+```
+
+### 2. Ollamaを起動し、モデルをダウンロード
+
+Ollamaのサーバーを起動します。
+
+```sh
+ollama serve
+```
+
+起動したOllamaを残したまま、ターミナル等で別タブを開くなどして、別のセッションでモデルをダウンロードします。
+
+```sh
+ollama pull qwen3.5:0.8b
+```
+
+### 3. Pythonに必要ライブラリを追加
+
+Pythonの仮想環境を`./.venv`に作成します。
+
+```sh
+python -m venv .venv
+```
+
+以下のコマンドを使って、Python仮想環境(venv)を有効化します。
+
+- macOS / Linux: `source .venv/bin/activate`
+- Windows (コマンドプロンプト): `.venv\Scripts\activate.bat`
+- Windows (PowerShell): `.venv\Scripts\Activate.ps1`
+
+必要なPythonライブラリをインストールします。
+
+```sh
+pip install -r requirements.txt
+```
+
+### 4. Flaskの開発サーバを起動
+
+次のコマンドを実行し、開発サーバを起動します。
+
+```sh
+python backend/app.py
+```
+
+ブラウザで[`http://localhost:5000/static/index.html`](http://localhost:5000/static/index.html)にアクセスすると、ページが表示されます。
+
+> [!CAUTION]
+> 開発サーバは[本番環境で使わないでください](https://flask.palletsprojects.com/en/stable/server/)。
+
+# 🧰開発環境
 
 - [Visual Studio Code](https://code.visualstudio.com/)
 - [OpenCode](https://opencode.ai/ja)
 - [Ollama](https://ollama.com/)
+- [Python](https://www.python.org/)
 
-# 開発ツールインストール
+# 📥環境構築
+
+## 開発ツールインストール
+
+### Windows
 
 - 管理者権限でコマンドプロンプトを起動します。
 - 以下のコマンドを実行し、`winget`で必要なソフトウェアを入手します。
@@ -32,9 +140,21 @@ ollama pull qwen3.5:0.8b
   - Python
   - Vue.js Extension Pack
 
-# 環境セットアップ
+### macOS
 
-## Python ライブラリインストール
+[Homebrew](https://brew.sh/ja/)などのパッケージマネージャを使用して必要なソフトをインストールしてください。
+
+```sh
+brew install -y visual-studio-code python@3.13 opencode ollama
+ollama serve &
+ollama pull qwen3.5:0.8b
+```
+
+（Pythonはuvを使用して`uv pin python 3.13`も可）
+
+## 環境セットアップ
+
+### Python ライブラリインストール
 
 以下のコマンドでPythonの利用ライブラリをインストールします。
 
@@ -46,21 +166,10 @@ pip install -r requirements.txt
 
 ```sh
 uv venv
-uv install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
-# 実行方法
-
-- 以下のコマンドでサーバを起動します。
-  ```sh
-  python app.py
-  ```
-- ブラウザで[以下のURL](http://localhost:5000)にアクセスしてみてください。
-  ```
-  http://localhost:5000
-  ```
-
-# 開発の参考資料
+# 📚開発の参考資料
 
 ## ローカルの Ollama を使う場合（低性能だが利用制限なし）：
 
@@ -88,7 +197,7 @@ ollama launch opencode --model=qwen3.5:0.8b
 
 - /connect と入力、プロバイダ一覧が表示されるので、Googleを選択、APIキーに先ほどのAPIキーを貼り付けます。
 
-# AIを用いたコード修正
+# 🤖AIを用いたコード修正
 
 - opencodeに修正を依頼してみてください。（例：猫語で回答するボタンを追加して ）
 
@@ -96,16 +205,36 @@ ollama launch opencode --model=qwen3.5:0.8b
 
 - バックエンド担当者は、app.py上にURLとAPIを作成してください。
 
-# 参考リンク
+# 🚧実装状況と今後の課題
+
+- **フロントエンド実装**:
+  - [x] Vue Routerによるマルチビュー構成（Home / History / About）
+  - [x] MediaRecorderによる音声録音・タイマー計測UI
+  - [x] 3種類の要約スタイル切り替え（簡潔・会議録・レポート）
+  - [x] LocalStorage永続化（要約履歴の復元・個別削除）
+  - [x] トースト通知・テキストファイルダウンロード・印刷レイアウト
+  - [ ] 内容からカレンダーの予定の生成
+  - [ ] 文字起こしのリアルタイム表示
+- **バックエンドAPI実装**:
+  - [x] `/api/transcribe`: 音声受付・文字起こしエンドポイント
+  - [x] `/api/summarize`: 要約プロンプト生成・Ollama連携
+  - [x] `/api/submit`: 要約データ送信受付
+  - [ ] `services/transcription.py`: Whisper等による実音声文字起こしの実装
+  - [ ] `/api/submit`: （実装するか未定）SQLite等を用いた要約履歴のサーバーサイドDB永続化
+
+# 📚🔗参考リンク
 
 - [Flask](https://flask.palletsprojects.com/en/stable/)
   - Python で書かれた Webアプリケーションサーバ
-
 - [Vue.js](https://vuejs.org/)
   - JavaScript製製のWebフロントエンド フレームワーク
-
 - [Vue.js Tutorial](https://ja.vuejs.org/tutorial/)
   - Vue.jsの入門用チュートリアル
-
+- [Vue Router](https://router.vuejs.org/guide/)
+  - SPAを構築するための公式プラグイン
+- [Bootstrap](https://getbootstrap.jp/docs/5.3/getting-started/introduction/)
+  - UIを作成するたえのフロントエンドツールキット
 - [OpenAI API](https://github.com/openai/openai-python)
   - Pythonから、OpenAI APIを呼び出すライブラリ
+- [Ollama Python Library](https://github.com/ollama/ollama-python)
+  - PythonからOllamaのNative APIを呼び出すライブラリ
