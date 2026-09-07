@@ -189,6 +189,10 @@ const store = reactive({
     const startTime = Date.now();
     try {
       const blob = await audio.stopRecording();
+      if (!blob || blob.size === 0) {
+        this.showToast('録音時間が短すぎるため破棄しました', 'info');
+        return;
+      }
       const text = await api.transcribeAudio(blob);
       if (text) {
         this.lastTranscribeTimeMs = Date.now() - startTime;
