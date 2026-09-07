@@ -8,6 +8,9 @@ export const STYLE_KEY = 'summarizer_style';
  * @deprecated 履歴の14日間TTL削除仕様の撤廃に伴い非推奨。後方互換性のために保持。
  */
 export const HISTORY_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14日間
+/**
+ * @deprecated スタイル設定の7日間TTL仕様の撤廃に伴い非推奨。後方互換性のために保持。
+ */
 export const STYLE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7日間
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
 
@@ -114,20 +117,11 @@ export function deleteHistory(id) {
   writeHistoryRecord(record);
 }
 
-// スタイルの有効期限判定ヘルパー
-export function isStyleExpired(createdAt) {
-  if (!createdAt || typeof createdAt !== 'number') {
-    return false;
-  }
-  return Date.now() - createdAt > STYLE_TTL_MS;
-}
-
 // 選択スタイル保存
 export function saveSelectedStyle(styleId) {
   try {
     const data = {
-      styleId,
-      lastAccessedAt: Date.now()
+      styleId
     };
     localStorage.setItem(STYLE_KEY, JSON.stringify(data));
   } catch (error) {
@@ -143,11 +137,6 @@ export function getSelectedStyle() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed.styleId !== 'string') return null;
 
-    const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : null;
-    if (isStyleExpired(lastAccessed)) {
-      localStorage.removeItem(STYLE_KEY);
-      return null;
-    }
     return parsed.styleId;
   } catch (error) {
     console.error('要約スタイルの取得に失敗しました:', error);
@@ -157,17 +146,5 @@ export function getSelectedStyle() {
 
 // 期限切れデータクリーンアップ
 export function cleanupExpiredData() {
-  // スタイル設定クリーンアップ（7日アクセスなし）
-  try {
-    const styleRaw = localStorage.getItem(STYLE_KEY);
-    if (styleRaw) {
-      const styleRecord = JSON.parse(styleRaw);
-      const lastAccessed = typeof styleRecord?.lastAccessedAt === 'number' ? styleRecord.lastAccessedAt : null;
-      if (isStyleExpired(lastAccessed)) {
-        localStorage.removeItem(STYLE_KEY);
-      }
-    }
-  } catch (error) {
-    console.warn('スタイル設定のクリーンアップ中にエラーが発生しました:', error);
-  }
+  // 履歴および要約スタイルのTTL仕様撤廃に伴い、クリーンアップ処理は不要
 }
