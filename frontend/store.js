@@ -199,9 +199,12 @@ const store = reactive({
         return;
       }
       const text = await api.transcribeAudio(blob);
-      if (text) {
+      if (text && text.trim()) {
         this.lastTranscribeTimeMs = Date.now() - startTime;
         this.handleTranscriptionSuccess(text);
+      } else {
+        this.lastTranscribeTimeMs = null;
+        this.showToast('音声を認識できませんでした', 'info');
       }
     } catch (err) {
       this.lastTranscribeTimeMs = null;
@@ -241,9 +244,12 @@ const store = reactive({
     const startTime = Date.now();
     try {
       const text = await api.transcribeAudio(file);
-      if (text) {
+      if (text && text.trim()) {
         this.lastTranscribeTimeMs = Date.now() - startTime;
         this.handleTranscriptionSuccess(text);
+      } else {
+        this.lastTranscribeTimeMs = null;
+        this.showToast('音声を認識できませんでした', 'info');
       }
     } catch (err) {
       this.lastTranscribeTimeMs = null;
