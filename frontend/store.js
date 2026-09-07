@@ -120,6 +120,13 @@ const store = reactive({
     // this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
   },
 
+  // スタイル選択と永続化
+  setSelectedStyle(styleId) {
+    if (!styleId || typeof styleId !== 'string') return;
+    this.selectedStyle = styleId;
+    storage.saveSelectedStyle(styleId);
+  },
+
   // 現在の要約入出力をリセット
   resetCurrentSummary() {
     this.inputText = '';

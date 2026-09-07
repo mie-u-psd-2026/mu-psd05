@@ -1,5 +1,4 @@
 import store, { SUMMARY_STYLES } from '../store.js';
-import * as storage from '../services/storage.js';
 import * as download from '../services/download.js';
 import * as audio from '../services/audio.js';
 import * as visualizer from '../services/visualizer.js';
@@ -23,7 +22,6 @@ export default {
   data() {
     return {
       store,
-      storage,
       styles: SUMMARY_STYLES,
       isDragging: false,
       viewMode: 'preview'
