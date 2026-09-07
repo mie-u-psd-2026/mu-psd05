@@ -101,6 +101,9 @@ export default {
     },
     // ドラッグオーバー処理
     handleDragOver(e) {
+      if (!e.dataTransfer?.types?.includes('Files')) {
+        return;
+      }
       e.preventDefault();
       if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
         return;
@@ -119,6 +122,9 @@ export default {
     },
     // 音声ファイルドロップ処理
     handleFileDrop(e) {
+      if (!e.dataTransfer?.types?.includes('Files')) {
+        return;
+      }
       e.preventDefault();
       this.isDragging = false;
       if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
