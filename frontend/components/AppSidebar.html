@@ -1,4 +1,4 @@
-<!-- モバイル用トップナビゲーションバー (768px未満で表示、左側に開閉ボタン配置) -->
+<!-- モバイル用トップナビゲーションバー (d-md-none: 768px未満で表示) -->
 <header class="navbar bg-body-tertiary border-bottom d-md-none px-3 py-2 d-print-none w-100">
   <div class="container-fluid px-0 d-flex justify-content-start align-items-center">
     <button class="navbar-toggler me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas" aria-label="メニュー開閉">
@@ -10,9 +10,9 @@
   </div>
 </header>
 
-<!-- サイドバー本体 (PC/タブレット: 768px以上で左常時表示 / モバイル: 768px未満でオフキャンバス) -->
-<aside id="sidebarOffcanvas" class="offcanvas-md offcanvas-start bg-body-tertiary border-end d-print-none flex-shrink-0" tabindex="-1" style="width: 230px;">
-  <!-- モバイル用オフキャンバスヘッダー -->
+<!-- サイドバー (レスポンシブ) -->
+<aside id="sidebarOffcanvas" class="app-sidebar offcanvas-md offcanvas-start bg-body-tertiary border-end d-print-none flex-shrink-0" tabindex="-1">
+  <!-- モバイル オフキャンバスヘッダー -->
   <div class="offcanvas-header border-bottom d-md-none">
     <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">
       <app-brand icon-size="fs-5" text-size="fs-5"></app-brand>
@@ -20,14 +20,14 @@
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#sidebarOffcanvas" aria-label="閉じる"></button>
   </div>
 
-  <!-- サイドバーコンテンツ -->
+  <!-- サイドバーのボタン類 -->
   <div class="offcanvas-body d-flex flex-column p-3 h-100">
-    <!-- PC用アプリタイトル (768px以上) -->
+    <!-- PC アプリ名  -->
     <div class="d-none d-md-flex align-items-center mb-4 text-decoration-none">
       <app-brand icon-size="fs-2" text-size="fs-5"></app-brand>
     </div>
 
-    <!-- 新規要約ボタン -->
+    <!-- [+新規要約] ボタン -->
     <div class="mb-3 text-center">
       <button type="button" class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center fw-semibold shadow-sm" @click="handleNewSummary" :disabled="store.isBusy">
         <i class="bi bi-plus-lg me-1"></i>

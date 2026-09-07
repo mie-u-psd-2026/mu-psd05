@@ -75,7 +75,7 @@ export default {
     }
   },
   template: `
-    <div class="toast-container position-fixed bottom-0 end-0 p-3 d-print-none" style="z-index: 1090;">
+    <div class="app-toast-container toast-container position-fixed bottom-0 end-0 p-3 d-print-none">
       <div
         ref="toastRef"
         class="toast fade align-items-center border-0"
