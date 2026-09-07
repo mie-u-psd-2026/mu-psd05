@@ -38,7 +38,7 @@
               rows="8"
               placeholder="入力するか、左下の「録音」から文字起こししてください…"
               v-model="store.inputText"
-              @input="store.setDraft()"
+              @input="store.setSessionState()"
               :disabled="store.isSummarizing"
             ></textarea>
             <!-- サンプル文章サジェストチップ -->
@@ -99,7 +99,7 @@
                     class="border rounded bg-body-tertiary mx-1 d-none d-sm-inline-block overflow-hidden pe-none"
                     aria-hidden="true"
                   ></div>
-                  <span class="badge bg-secondary ms-1 font-monospace">{{ store.formattedRecordTime }}</span>
+                  <span class="badge bg-body-secondary text-body ms-1 font-monospace">{{ store.formattedRecordTime }}</span>
                 </template>
                 <button
                   v-if="!store.isRecording"
@@ -170,8 +170,8 @@
               </button>
               <button
                 type="button"
-                class="btn btn-sm p-1 me-3 text-secondary"
-                :class="{ 'text-white': store.selectedStyle === style.id }"
+                class="btn btn-sm p-1 me-3 text-body-secondary"
+                :class="{ 'text-body': store.selectedStyle === style.id }"
                 v-popover
                 :data-bs-content="style.desc"
                 title="スタイル詳細"
