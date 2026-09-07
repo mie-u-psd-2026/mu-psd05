@@ -11,13 +11,13 @@
         <!-- ドラッグ&ドロップ オーバーレイUI -->
         <div
           v-if="isDragging"
-          class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded z-3"
-          style="border: 2px dashed var(--bs-primary); pointer-events: none;"
+          class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded z-3 pe-none"
+          style="border: 2px dashed var(--bs-primary);"
           aria-hidden="true"
         >
           <i class="bi bi-cloud-arrow-up text-primary fs-1 mb-2"></i>
           <p class="fw-semibold text-primary mb-0">ここに音声ファイルをドロップして文字起こし</p>
-          <span class="text-muted small mt-1">.mp3, .wav, .m4a, .webm, .ogg, .aac, .flac (最大100MB)</span>
+          <span class="text-body-secondary small mt-1">.mp3, .wav, .m4a, .webm, .ogg, .aac, .flac (最大100MB)</span>
         </div>
 
         <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
@@ -38,48 +38,43 @@
               rows="8"
               placeholder="入力するか、左下の「録音」から文字起こししてください…"
               v-model="store.inputText"
-              @input="store.setDraft()"
+              @input="store.setSessionState()"
               :disabled="store.isSummarizing"
             ></textarea>
             <!-- サンプル文章サジェストチップ -->
-            <div
-              v-if="store.samples && store.samples.length > 0"
-              class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
-              :style="{
-                opacity: store.inputText ? 0 : 1,
-                visibility: store.inputText ? 'hidden' : 'visible',
-                pointerEvents: store.inputText ? 'none' : 'auto',
-                transition: 'opacity 0.25s ease, visibility 0.25s ease'
-              }"
-              :inert="!!store.inputText"
-              role="group"
-              aria-label="サンプル文章の選択"
-            >
-              <span class="text-muted small me-1">
-                <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
-              </span>
-              <button
-                v-for="sample in store.samples"
-                :key="sample.id"
-                type="button"
-                class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
-                style="font-size: 0.75rem;"
-                :disabled="store.isSummarizing || store.isRecording || store.isTranscribing"
-                :aria-label="sample.title + 'のサンプル文章を入力'"
-                :title="sample.title + 'を挿入'"
-                @click="handleApplySample(sample)"
+            <transition name="fade">
+              <div
+                v-if="!store.inputText && store.samples && store.samples.length > 0"
+                class="position-absolute bottom-0 start-0 w-100 p-2 d-flex align-items-center flex-wrap gap-1"
+                role="group"
+                aria-label="サンプル文章の選択"
               >
-                <i :class="sample.icon" class="me-1" aria-hidden="true"></i>{{ sample.title }}
-              </button>
-            </div>
+                <span class="text-body-secondary small me-1">
+                  <i class="bi bi-lightbulb me-1" aria-hidden="true"></i>サンプル:
+                </span>
+                <button
+                  v-for="sample in store.samples"
+                  :key="sample.id"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm rounded-pill py-0 px-2"
+                  style="font-size: 0.75rem;"
+                  :disabled="store.isBusy"
+                  :aria-label="sample.title + 'のサンプル文章を入力'"
+                  :title="sample.title + 'を挿入'"
+                  @click="handleApplySample(sample)"
+                >
+                  <i :class="sample.icon" class="me-1" aria-hidden="true"></i>{{ sample.title }}
+                </button>
+              </div>
+            </transition>
           </div>
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
-              <span class="text-muted small">{{ store.inputText.length }}文字</span>
+              <span class="text-body-secondary small">{{ store.inputText.length }}文字</span>
               <span
                 v-if="store.lastTranscribeTimeMs !== null"
-                class="text-muted small ms-2"
-              >文字起こし: {{ store.lastTranscribeTimeMs < 1000 ? store.lastTranscribeTimeMs + 'ms' : (store.lastTranscribeTimeMs / 1000).toFixed(1) + 's' }}</span>
+                class="text-body-secondary small ms-2"
+              >文字起こし: {{ formatDuration(store.lastTranscribeTimeMs) }}</span>
               <div class="d-inline-flex align-items-center ms-2">
                 <button
                   v-if="!store.isRecording"
@@ -104,7 +99,7 @@
                     class="border rounded bg-body-tertiary mx-1 d-none d-sm-inline-block overflow-hidden pe-none"
                     aria-hidden="true"
                   ></div>
-                  <span class="badge bg-secondary ms-1 font-monospace">{{ store.formattedRecordTime }}</span>
+                  <span class="badge bg-body-secondary text-body ms-1 font-monospace">{{ store.formattedRecordTime }}</span>
                 </template>
                 <button
                   v-if="!store.isRecording"
@@ -131,14 +126,14 @@
                   aria-live="polite"
                 >
                   <span class="spinner-border spinner-border-sm text-primary me-1" aria-hidden="true"></span>
-                  <span class="text-muted small">文字起こし中...</span>
+                  <span class="text-body-secondary small">文字起こし中...</span>
                 </div>
               </div>
             </div>
             <button
               type="button"
               class="btn btn-primary px-4 fw-semibold d-flex align-items-center"
-              :disabled="!store.inputText.trim() || store.isSummarizing || store.isRecording || store.isTranscribing"
+              :disabled="!store.inputText.trim() || store.isBusy"
               @click="store.executeSummarize()"
             >
               <span v-if="store.isSummarizing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -161,25 +156,26 @@
             <div
               v-for="style in styles"
               :key="style.id"
-              class="list-group-item list-group-item-action d-flex justify-content-between align-items-center cursor-pointer py-3"
+              class="list-group-item d-flex justify-content-between align-items-center p-0"
               :class="{ active: store.selectedStyle === style.id }"
-              @click="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
-              @keydown.enter="store.selectedStyle = style.id; storage.saveSelectedStyle(style.id)"
-              role="button"
-              tabindex="0"
             >
-              <div class="d-flex align-items-center">
-                <i :class="style.icon" class="fs-5 me-2"></i>
-                <span class="fw-medium">{{ style.name }}</span>
-              </div>
               <button
                 type="button"
-                class="btn btn-sm p-1 text-secondary"
-                :class="{ 'text-white': store.selectedStyle === style.id }"
-                @click.stop
+                class="btn border-0 text-start d-flex align-items-center flex-grow-1 py-3 ps-3 pe-2 bg-transparent text-reset text-decoration-none shadow-none"
+                :disabled="store.isSummarizing"
+                @click="store.setSelectedStyle(style.id)"
+              >
+                <i :class="style.icon" class="fs-5 me-2"></i>
+                <span class="fw-medium">{{ style.name }}</span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm p-1 me-3 text-body-secondary"
+                :class="{ 'text-body': store.selectedStyle === style.id }"
                 v-popover
                 :data-bs-content="style.desc"
                 title="スタイル詳細"
+                aria-label="スタイル詳細"
               >
                 <i class="bi bi-info-circle"></i>
               </button>
@@ -197,20 +193,26 @@
           <div class="d-flex align-items-center gap-2 d-print-none">
             <!-- 表示形式切り替えボタングループ -->
             <div class="btn-group btn-group-sm me-2" role="group" aria-label="表示形式切り替え">
-              <button
-                type="button"
-                class="btn"
-                :class="viewMode === 'preview' ? 'btn-primary' : 'btn-outline-secondary'"
-                :aria-pressed="viewMode === 'preview'"
-                @click="viewMode = 'preview'"
-              >プレビュー</button>
-              <button
-                type="button"
-                class="btn"
-                :class="viewMode === 'raw' ? 'btn-primary' : 'btn-outline-secondary'"
-                :aria-pressed="viewMode === 'raw'"
-                @click="viewMode = 'raw'"
-              >生テキスト</button>
+              <input
+                type="radio"
+                class="btn-check"
+                name="viewMode"
+                id="viewModePreview"
+                value="preview"
+                v-model="viewMode"
+                autocomplete="off"
+              >
+              <label class="btn btn-outline-primary" for="viewModePreview">プレビュー</label>
+              <input
+                type="radio"
+                class="btn-check"
+                name="viewMode"
+                id="viewModeRaw"
+                value="raw"
+                v-model="viewMode"
+                autocomplete="off"
+              >
+              <label class="btn btn-outline-primary" for="viewModeRaw">生テキスト</label>
             </div>
             <!-- ダウンロードドロップダウン -->
             <div class="dropdown">
@@ -220,7 +222,7 @@
                 id="downloadDropdown"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                :disabled="!store.resultText || store.isSummarizing"
+                :disabled="!store.resultText || store.isSummarizing || !!store.errorMessage"
               >
                 <i class="bi bi-download me-1" aria-hidden="true"></i>ダウンロード
               </button>
@@ -246,7 +248,7 @@
               type="button"
               class="btn btn-sm btn-outline-secondary d-flex align-items-center"
               @click="handleCopy"
-              :disabled="!store.resultText"
+              :disabled="!store.resultText || store.isSummarizing || !!store.errorMessage"
             >
               <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>コピー
             </button>
@@ -270,8 +272,8 @@
         </div>
         <div
           v-if="store.lastSummarizeTimeMs !== null"
-          class="card-footer bg-transparent text-muted small py-2 d-print-none"
-        >要約: {{ store.lastSummarizeTimeMs < 1000 ? store.lastSummarizeTimeMs + 'ms' : (store.lastSummarizeTimeMs / 1000).toFixed(1) + 's' }}</div>
+          class="card-footer bg-transparent text-body-secondary small py-2 d-print-none"
+        >要約: {{ formatDuration(store.lastSummarizeTimeMs) }}</div>
       </div>
     </div>
   </div>

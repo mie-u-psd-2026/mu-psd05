@@ -1,14 +1,21 @@
+import store from '../store.js';
 import { loadTemplate } from '../services/templateLoader.js';
 
 export default {
   name: 'AppSidebar',
-  emits: ['new-summary'],
+  data() {
+    return {
+      store
+    };
+  },
   methods: {
     handleNewSummary() {
-      if (this.$store) {
-        this.$store.resetCurrentSummary();
+      if (this.store.isBusy) {
+        return;
       }
-      this.$emit('new-summary');
+      if (this.store) {
+        this.store.resetCurrentSummary();
+      }
       if (this.$route.path !== '/') {
         this.$router.push('/');
       }

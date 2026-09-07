@@ -1,3 +1,4 @@
+// MediaRecorderで音声録音とマイクストリームを管理
 // サポートされている安全なMIMEタイプの判定
 export function getSupportedMimeType() {
   const candidateTypes = [
@@ -25,6 +26,7 @@ let mediaRecorder = null;
 let audioStream = null;
 let audioChunks = [];
 let recordTimer = null;
+let startPromise = null;
 let stopPromise = null;
 
 // MediaStream のトラックを安全に全停止するヘルパー
@@ -42,8 +44,8 @@ function stopStreamTracks(stream) {
 
 // 音声録音の開始
 export async function startRecording({ onTick, onError } = {}) {
-  // すでに録音中または停止処理中の場合は多重起動を防止
-  if ((mediaRecorder && mediaRecorder.state !== 'inactive') || stopPromise) {
+  // すでに録音中または開始・停止処理中の場合は多重起動を防止
+  if ((mediaRecorder && mediaRecorder.state !== 'inactive') || startPromise || stopPromise) {
     return;
   }
 
@@ -54,47 +56,64 @@ export async function startRecording({ onTick, onError } = {}) {
   }
   audioChunks = [];
 
-  let stream = null;
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioStream = stream;
+  startPromise = (async () => {
+    let stream = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    const mimeType = getSupportedMimeType();
-    const options = mimeType ? { mimeType } : {};
-
-    const recorder = new MediaRecorder(stream, options);
-    mediaRecorder = recorder;
-
-    recorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        audioChunks.push(event.data);
+      // 取得待ちの間に停止処理やキャンセルが発生していた場合は安全に終了
+      if (stopPromise) {
+        stopStreamTracks(stream);
+        return;
       }
-    };
 
-    recorder.onerror = (event) => {
-      if (typeof onError === 'function') {
-        onError(event.error || new Error('録音処理中にエラーが発生しました'));
+      audioStream = stream;
+
+      const mimeType = getSupportedMimeType();
+      const options = mimeType ? { mimeType } : {};
+
+      const recorder = new MediaRecorder(stream, options);
+      mediaRecorder = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      recorder.onerror = (event) => {
+        if (typeof onError === 'function') {
+          onError(event.error || new Error('録音処理中にエラーが発生しました'));
+        }
+      };
+
+      recorder.start();
+
+      recordTimer = setInterval(() => {
+        if (typeof onTick === 'function') {
+          onTick();
+        }
+      }, 1000);
+    } catch (err) {
+      // 初期化または start() 失敗時にマイクストリームを確実に停止・解放
+      stopStreamTracks(stream);
+      audioStream = null;
+      mediaRecorder = null;
+      audioChunks = [];
+      if (recordTimer) {
+        clearInterval(recordTimer);
+        recordTimer = null;
       }
-    };
-
-    recorder.start(250);
-
-    recordTimer = setInterval(() => {
-      if (typeof onTick === 'function') {
-        onTick();
-      }
-    }, 1000);
-  } catch (err) {
-    // 初期化または start() 失敗時にマイクストリームを確実に停止・解放
-    stopStreamTracks(stream);
-    audioStream = null;
-    mediaRecorder = null;
-    audioChunks = [];
-    if (recordTimer) {
-      clearInterval(recordTimer);
-      recordTimer = null;
+      throw err;
+    } finally {
+      startPromise = null;
     }
-    throw err;
+  })();
+
+  try {
+    return await startPromise;
+  } finally {
+    startPromise = null;
   }
 }
 

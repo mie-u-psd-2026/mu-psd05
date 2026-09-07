@@ -1,75 +1,69 @@
+// セッション状態と履歴の永続化を管理
 // ストレージキー定数
-export const DRAFT_KEY = 'summarizer_draft';
+export const SESSION_STATE_KEY = 'summarizer_session_state';
 export const HISTORY_KEY = 'summarizer_history';
 export const STYLE_KEY = 'summarizer_style';
 
-// 有効期限および件数上限定数
-/**
- * @deprecated 履歴の14日間TTL削除仕様の撤廃に伴い非推奨。後方互換性のために保持。
- */
-export const HISTORY_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14日間
-export const STYLE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7日間
+// 件数上限定数
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
 
 // ID生成ヘルパー
-function generateId() {
+export function generateId() {
+  // cryptoが使えるならそれを使う
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
+  // 使えないなら適当に作る
   return 'item_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 9);
 }
 
-// 下書き保存
-export function saveDraft(data) {
+/* 現在のセッション */
+// セッション状態保存
+export function saveSessionState(data) {
   try {
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    sessionStorage.setItem(SESSION_STATE_KEY, JSON.stringify(data));
   } catch (error) {
-    console.error('下書きの保存に失敗しました:', error);
+    console.error('セッション状態の保存に失敗しました:', error);
   }
 }
 
-// 下書き取得
-export function loadDraft() {
+// セッション状態取得
+export function loadSessionState() {
   try {
-    const raw = sessionStorage.getItem(DRAFT_KEY);
+    const raw = sessionStorage.getItem(SESSION_STATE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (error) {
-    console.error('下書きの取得に失敗しました:', error);
+    console.error('セッション状態の取得に失敗しました:', error);
     return null;
   }
 }
 
-// 下書き削除
-export function clearDraft() {
+// セッション状態削除
+export function clearSessionState() {
   try {
-    sessionStorage.removeItem(DRAFT_KEY);
+    sessionStorage.removeItem(SESSION_STATE_KEY);
   } catch (error) {
-    console.error('下書きの削除に失敗しました:', error);
+    console.error('セッション状態の削除に失敗しました:', error);
   }
 }
 
+/* 履歴 */
 // 履歴ストレージ内部データ取得ヘルパー
 function readHistoryRecord() {
   try {
     const raw = localStorage.getItem(HISTORY_KEY);
     if (!raw) {
-      return { items: [], lastAccessedAt: Date.now() };
+      return { items: [] };
     }
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.items)) {
       const validItems = parsed.items.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
-      const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : Date.now();
-      return { items: validItems, lastAccessedAt: lastAccessed };
+      return { items: validItems };
     }
-    // 生配列データが存在した場合の後方互換フォールバック
-    if (Array.isArray(parsed)) {
-      const validItems = parsed.filter(it => it && typeof it === 'object' && typeof it.id === 'string');
-      return { items: validItems, lastAccessedAt: Date.now() };
-    }
-    return { items: [], lastAccessedAt: Date.now() };
+    return { items: [] };
   } catch (error) {
     console.error('履歴データの読み込みに失敗しました:', error);
-    return { items: [], lastAccessedAt: Date.now() };
+    return { items: [] };
   }
 }
 
@@ -97,14 +91,13 @@ export function saveHistory({ inputText, resultText, selectedStyle }) {
   if (record.items.length > MAX_HISTORY_ITEMS) {
     record.items = record.items.slice(0, MAX_HISTORY_ITEMS);
   }
-  record.lastAccessedAt = Date.now();
   writeHistoryRecord(record);
 
   return newItem;
 }
 
 // 履歴取得
-export function getHistories() {
+export function getHistory() {
   const record = readHistoryRecord();
   return record.items;
 }
@@ -113,7 +106,6 @@ export function getHistories() {
 export function deleteHistory(id) {
   const record = readHistoryRecord();
   record.items = record.items.filter(item => item.id !== id);
-  record.lastAccessedAt = Date.now();
   writeHistoryRecord(record);
 }
 
@@ -121,8 +113,7 @@ export function deleteHistory(id) {
 export function saveSelectedStyle(styleId) {
   try {
     const data = {
-      styleId,
-      lastAccessedAt: Date.now()
+      styleId
     };
     localStorage.setItem(STYLE_KEY, JSON.stringify(data));
   } catch (error) {
@@ -138,11 +129,6 @@ export function getSelectedStyle() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed.styleId !== 'string') return null;
 
-    const lastAccessed = typeof parsed.lastAccessedAt === 'number' ? parsed.lastAccessedAt : null;
-    if (lastAccessed && (Date.now() - lastAccessed > STYLE_TTL_MS)) {
-      localStorage.removeItem(STYLE_KEY);
-      return null;
-    }
     return parsed.styleId;
   } catch (error) {
     console.error('要約スタイルの取得に失敗しました:', error);
@@ -150,21 +136,3 @@ export function getSelectedStyle() {
   }
 }
 
-// 期限切れデータクリーンアップ
-export function cleanupExpiredData() {
-  const now = Date.now();
-
-  // スタイル設定クリーンアップ（7日アクセスなし）
-  try {
-    const styleRaw = localStorage.getItem(STYLE_KEY);
-    if (styleRaw) {
-      const styleRecord = JSON.parse(styleRaw);
-      const lastAccessed = typeof styleRecord?.lastAccessedAt === 'number' ? styleRecord.lastAccessedAt : null;
-      if (lastAccessed && (now - lastAccessed > STYLE_TTL_MS)) {
-        localStorage.removeItem(STYLE_KEY);
-      }
-    }
-  } catch (error) {
-    console.warn('スタイル設定のクリーンアップ中にエラーが発生しました:', error);
-  }
-}

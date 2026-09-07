@@ -1,5 +1,4 @@
 import store, { SUMMARY_STYLES } from '../store.js';
-import * as storage from '../services/storage.js';
 import * as download from '../services/download.js';
 import * as audio from '../services/audio.js';
 import * as visualizer from '../services/visualizer.js';
@@ -10,12 +9,19 @@ import DOMPurify from 'dompurify';
 // GFMおよび改行オプションを有効化
 marked.use({ breaks: true, gfm: true });
 
+// Markdownリンクにtarget="_blank"とrel="noopener noreferrer"を付与してSPA離脱を防止
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.tagName === 'A' && node.getAttribute('href')) {
+    node.setAttribute('target', '_blank');
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
+
 export default {
   name: 'HomeView',
   data() {
     return {
       store,
-      storage,
       styles: SUMMARY_STYLES,
       isDragging: false,
       viewMode: 'preview'
@@ -42,8 +48,11 @@ export default {
     async handlePaste() {
       try {
         const text = await navigator.clipboard.readText();
+        if (!text) {
+          return;
+        }
         this.store.inputText = text;
-        this.store.setDraft();
+        this.store.setSessionState();
       } catch (err) {
         this.store.showToast('クリップボードの読み取りに失敗しました', 'danger');
       }
@@ -83,7 +92,7 @@ export default {
       }
       this.viewMode = 'preview';
       this.$nextTick(() => {
-        download.printAsPdf();
+        download.triggerPrint();
       });
     },
     // サンプル文章の適用とフォーカス移動
@@ -98,8 +107,11 @@ export default {
     },
     // ドラッグオーバー処理
     handleDragOver(e) {
+      if (!e.dataTransfer?.types?.includes('Files')) {
+        return;
+      }
       e.preventDefault();
-      if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
+      if (this.store.isBusy) {
         return;
       }
       if (e.dataTransfer) {
@@ -116,9 +128,12 @@ export default {
     },
     // 音声ファイルドロップ処理
     handleFileDrop(e) {
+      if (!e.dataTransfer?.types?.includes('Files')) {
+        return;
+      }
       e.preventDefault();
       this.isDragging = false;
-      if (this.store.isSummarizing || this.store.isRecording || this.store.isTranscribing) {
+      if (this.store.isBusy) {
         return;
       }
       const files = e.dataTransfer?.files;
@@ -137,6 +152,11 @@ export default {
         this.store.transcribeAudioFile(files[0]);
       }
       input.value = '';
+    },
+    // 所要時間（ミリ秒）を人間が読みやすい形式に整形
+    formatDuration(ms) {
+      if (typeof ms !== 'number' || isNaN(ms) || ms < 0) return '';
+      return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
     }
   },
   watch: {

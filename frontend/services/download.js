@@ -1,3 +1,4 @@
+// Blobダウンロード機能とプリンタ機能
 // 内部共通Blobダウンロード関数
 function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
@@ -13,20 +14,20 @@ function downloadBlob(filename, blob) {
   }, 1000);
 }
 
-// テキストファイルをBlob経由でダウンロード
-export function downloadTextFile(filename, text) {
-  const blob = new Blob([text ?? ''], { type: 'text/plain;charset=utf-8' });
+// テキストファイルをダウンロード
+export function downloadTextFile(filename = 'summary.txt', content = '') {
+  const blob = new Blob([content ?? ''], { type: 'text/plain;charset=utf-8' });
   downloadBlob(filename, blob);
 }
 
-// Markdown形式でダウンロード
+// Markdownファイルをダウンロード
 export function downloadMarkdownFile(filename = 'summary.md', content = '') {
   const blob = new Blob([content ?? ''], { type: 'text/markdown;charset=utf-8' });
   downloadBlob(filename, blob);
 }
 
-// 印刷ダイアログ表示（PDF形式での保存に利用）
-export function printAsPdf() {
+// 印刷ダイアログ表示
+export function triggerPrint() {
   // UIドロップダウンのトランジション完了を待機
   setTimeout(() => {
     window.print();
