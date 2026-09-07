@@ -9,19 +9,25 @@ export const SUMMARY_STYLES = [
     id: 'short',
     name: '簡潔',
     icon: 'bi-lightning-charge',
-    desc: '重要な情報だけで3〜5文にまとめる'
+    desc: '重要な情報だけで3〜5文にまとめます'
   },
   {
     id: 'meeting',
     name: '議事録',
     icon: 'bi-journal-text',
-    desc: '内容を4項目に整理します。\n項目：「会議概要」「決定事項」「課題」「次のアクション」'
+    desc: '内容を4項目に整理します：「会議概要」「決定事項」「課題」「次のアクション」'
   },
   {
     id: 'report',
     name: 'レポート',
     icon: 'bi-file-earmark-text',
-    desc: '論理的に、概要、詳細、結論の3段構成でまとめる'
+    desc: '論理的に、概要、詳細、結論の3段構成でまとめます'
+  },
+  {
+    id: 'bullet',
+    name: '箇条書き',
+    icon: 'bi-list-ol',
+    desc: '要点を箇条書きで並べます'
   }
 ];
 
