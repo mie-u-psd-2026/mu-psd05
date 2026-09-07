@@ -2,7 +2,7 @@
 export const vPopover = {
   mounted(el) {
     if (typeof bootstrap !== 'undefined' && bootstrap.Popover) {
-      el._popover = new bootstrap.Popover(el, { trigger: 'focus', placement: 'top' });
+      el._popover = new bootstrap.Popover(el, { trigger: 'click', placement: 'top' });
     }
   },
   unmounted(el) {
