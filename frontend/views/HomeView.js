@@ -165,7 +165,10 @@ export default {
       if (isRecording) {
         this.$nextTick(() => {
           if (this.store.isRecording && this.$refs.waveformCanvas) {
-            visualizer.startVisualizer(this.$refs.waveformCanvas, audio.getActiveStream());
+            const stream = audio.getActiveStream();
+            if (stream) {
+              visualizer.startVisualizer(this.$refs.waveformCanvas, stream);
+            }
           }
         });
       } else {

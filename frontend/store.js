@@ -40,10 +40,11 @@ const store = reactive({
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
+  isRequestingMic: false,
   summarizeAbortController: null,
-  // 要約・文字起こし・録音のいずれかが進行中か判定する算出プロパティ
+  // 要約・文字起こし・録音・マイク要求のいずれかが進行中か判定する算出プロパティ
   get isBusy() {
-    return this.isSummarizing || this.isRecording || this.isTranscribing;
+    return this.isSummarizing || this.isRecording || this.isTranscribing || this.isRequestingMic;
   },
   recordSeconds: 0,
   // 録音時間のフォーマット表示（MM:SS）
@@ -124,7 +125,7 @@ const store = reactive({
     this.errorMessage = '';
     this.lastTranscribeTimeMs = null;
     this.lastSummarizeTimeMs = null;
-    if (this.isRecording) {
+    if (this.isRecording || this.isRequestingMic) {
       this.cancelRecording();
     }
     if (this.isSummarizing) {
@@ -160,6 +161,7 @@ const store = reactive({
   // 録音のキャンセル・中断（文字起こしは実行せずリソースのみ解放）
   async cancelRecording() {
     this.isRecording = false;
+    this.isRequestingMic = false;
     this.recordSeconds = 0;
     try {
       await audio.stopRecording();
@@ -173,8 +175,7 @@ const store = reactive({
     if (this.isBusy) {
       return;
     }
-    this.isRecording = true;
-    this.recordSeconds = 0;
+    this.isRequestingMic = true;
     try {
       await audio.startRecording({
         onTick: () => {
@@ -185,10 +186,14 @@ const store = reactive({
           this.cancelRecording();
         }
       });
+      this.isRecording = true;
+      this.recordSeconds = 0;
     } catch (err) {
       this.isRecording = false;
       this.recordSeconds = 0;
       this.showToast('マイクが利用できません: ' + err.message, 'danger');
+    } finally {
+      this.isRequestingMic = false;
     }
   },
 
