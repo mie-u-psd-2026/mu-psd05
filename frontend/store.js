@@ -321,6 +321,14 @@ const store = reactive({
     this.showToast('履歴を削除しました', 'info');
   },
 
+  // 履歴全件削除
+  clearAllHistory() {
+    const count = this.historyItems.length;
+    storage.clearAllHistory();
+    this.historyItems = [];
+    this.showToast(`すべての履歴（${count}件）を削除しました`, 'info');
+  },
+
   // 履歴をメイン入力へ反映
   loadHistoryToMain(item) {
     this.errorMessage = '';

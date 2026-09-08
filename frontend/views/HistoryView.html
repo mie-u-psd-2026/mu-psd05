@@ -3,7 +3,19 @@
   <div class="card shadow-sm border">
     <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
       <h5 class="mb-0 fw-semibold">要約履歴一覧</h5>
-      <span class="badge bg-body-secondary text-body">{{ store.historyItems.length }}件</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-body-secondary text-body">{{ store.historyItems.length }}件</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger d-flex align-items-center"
+          :disabled="store.historyItems.length === 0 || isProcessing"
+          @click="openDeleteAllModal"
+          title="履歴をすべて削除"
+          aria-label="要約履歴をすべて削除"
+        >
+          <i class="bi bi-trash3 me-1"></i>すべて削除
+        </button>
+      </div>
     </div>
 
     <!-- 処理実行中の事前案内バナー -->
@@ -95,6 +107,34 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
           <button type="button" class="btn btn-danger" @click="confirmDelete">削除する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 一括削除確認モーダル -->
+  <div
+    class="modal fade"
+    ref="deleteAllModalRef"
+    tabindex="-1"
+    aria-labelledby="deleteAllModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteAllModalLabel">履歴を全て削除してよろしいですか？</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2 fw-semibold text-danger">この操作は取り消せません！</p>
+          <p class="text-body-secondary small mb-0">
+            {{ historyRangeText }}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-danger" @click="confirmDeleteAll">すべて削除する</button>
         </div>
       </div>
     </div>

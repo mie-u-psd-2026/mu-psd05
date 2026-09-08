@@ -109,6 +109,11 @@ export function deleteHistory(id) {
   writeHistoryRecord(record);
 }
 
+// 履歴全件削除
+export function clearAllHistory() {
+  writeHistoryRecord({ items: [] });
+}
+
 // 選択スタイル保存
 export function saveSelectedStyle(styleId) {
   try {

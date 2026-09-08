@@ -15,6 +15,17 @@ export default {
     // 処理実行中判定
     isProcessing() {
       return this.store.isBusy;
+    },
+    // 一括削除モーダル用の日時範囲テキスト
+    historyRangeText() {
+      const items = this.store.historyItems;
+      if (!items || items.length === 0) return '';
+      if (items.length === 1) {
+        return `${this.formatDate(items[0].createdAt)} に作成された 1 件の履歴が削除されます。`;
+      }
+      const latest = items[0].createdAt;
+      const oldest = items[items.length - 1].createdAt;
+      return `${this.formatDate(oldest)}〜${this.formatDate(latest)} に作成された ${items.length} 件の履歴が削除されます。`;
     }
   },
   methods: {
@@ -58,6 +69,22 @@ export default {
       if (this._deleteModalInstance) {
         this._deleteModalInstance.hide();
       }
+    },
+    // 一括削除確認モーダルを表示
+    openDeleteAllModal() {
+      if (this.isProcessing || this.store.historyItems.length === 0) {
+        return;
+      }
+      if (this._deleteAllModalInstance) {
+        this._deleteAllModalInstance.show();
+      }
+    },
+    // 一括削除の確定処理
+    confirmDeleteAll() {
+      this.store.clearAllHistory();
+      if (this._deleteAllModalInstance) {
+        this._deleteAllModalInstance.hide();
+      }
     }
   },
   mounted() {
@@ -67,6 +94,11 @@ export default {
       modalEl.addEventListener('hidden.bs.modal', () => {
         this.itemToDelete = null;
       });
+    }
+
+    const allModalEl = this.$refs.deleteAllModalRef;
+    if (allModalEl && typeof bootstrap !== 'undefined') {
+      this._deleteAllModalInstance = new bootstrap.Modal(allModalEl);
     }
   },
   beforeUnmount() {
@@ -78,6 +110,16 @@ export default {
         console.warn('モーダルインスタンスの破棄に失敗しました:', e);
       }
       this._deleteModalInstance = null;
+    }
+
+    if (this._deleteAllModalInstance) {
+      try {
+        this._deleteAllModalInstance.hide();
+        this._deleteAllModalInstance.dispose();
+      } catch (e) {
+        console.warn('一括削除モーダルインスタンスの破棄に失敗しました:', e);
+      }
+      this._deleteAllModalInstance = null;
     }
 
     // SPA画面遷移時に残存するBootstrapのバックドロップおよびbodyスクロールロックを確実に強制解除
