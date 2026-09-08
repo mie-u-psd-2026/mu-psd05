@@ -45,30 +45,26 @@
         >
           <button
             type="button"
-            class="flex-grow-1 me-3 overflow-hidden text-start bg-transparent border-0 p-0"
+            class="flex-grow-1 me-3 overflow-hidden text-start bg-transparent border-0 p-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2"
             :class="{ 'opacity-50': isProcessing }"
             :disabled="isProcessing"
             :aria-label="`履歴を復元: ${getStyleInfo(item.selectedStyle).name} (${formatDate(item.createdAt)})${isProcessing ? '（現在処理中のため選択不可）' : ''}`"
             @click="handleSelect(item)"
           >
-            <span class="d-flex align-items-center flex-wrap gap-2 mb-1">
-              <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center">
-                <i :class="getStyleInfo(item.selectedStyle).icon" class="me-1"></i>
-                {{ getStyleInfo(item.selectedStyle).name }}
-              </span>
-              <small class="text-body-secondary">{{ formatDate(item.createdAt) }}</small>
-            </span>
-            <span
-              class="d-block text-body small"
-              class="text-clamp-2"
-            >
+            <!-- 左側: 要約本文（2行省略） -->
+            <span class="text-body small text-clamp-2 flex-grow-1">
               {{ item.resultText || item.inputText || '（内容なし）' }}
             </span>
+
+            <!-- 右側（PC）/ 下側（スマホ）: メタ情報（日時 · スタイル） -->
+            <span class="text-body-secondary small text-nowrap flex-shrink-0">
+              {{ formatDate(item.createdAt) }} · {{ getStyleInfo(item.selectedStyle).name }}
+            </span>
           </button>
-          <div>
+          <div class="flex-shrink-0">
             <button
               type="button"
-              class="btn btn-sm btn-outline-danger ms-3"
+              class="btn btn-sm btn-outline-danger ms-2 ms-md-3"
               @click.stop="openDeleteModal(item)"
               title="削除"
               aria-label="この要約履歴を削除"
