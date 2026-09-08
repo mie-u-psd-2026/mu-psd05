@@ -12,7 +12,7 @@ OtoMatomeは、生成AI（LLM）を活用した音声入力の要約・整理が
 
 ## 📖ドキュメント
 
-- [仕様書（design-document.md）](./design-document.md): 機能要件・APIエンドポイント仕様
+- [仕様書（design-document.md）](./design-document.md): 機能要件・実装状況・入出力例・開発フロー・APIエンドポイント仕様
 - [画面設計（design-document-page.md）](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
 - [テスト仕様（test-spec.md）](./test-spec.md): 機能検証・APIテスト
 
@@ -184,30 +184,6 @@ ollama launch opencode --model=qwen3.5:0.8b
 - フロントエンド担当者は、html/JavaScriptを追加／修正して画面を構築してください。
 
 - バックエンド担当者は、app.py上にURLとAPIを作成してください。
-
-# 🚧実装状況と今後の課題
-
-- **フロントエンド実装**:
-  - [x] Vue Routerによるマルチビュー（Home / History / About）
-  - [x] MediaRecorderによる音声録音・タイマー
-  - [x] 要約スタイル切り替え
-  - [x] LocalStorageによる履歴永続化
-  - [x] ファイルダウンロード・印刷レイアウト
-  - [x] 通知トースト
-  - [ ] 内容からカレンダーの予定の生成
-- **バックエンドAPI実装**:
-  - [x] Flask開発サーバ
-    - [x] デバッグモードで開発サーバを起動
-    - [x] `frontend/`を`static/`扱いにする
-    - [x] `http://localhost:5000/`を`/static/index.html`に転送する
-  - [x] `/api/transcribe`: 音声受付・文字起こし
-    - [x] `services/transcription.py`: faster-whisperによる音声文字起こし
-  - [x] `/api/summarize`: 文章の要約
-    - [x] Ollamaへのリクエストと結果受け取り
-    - [x] 複数の要約スタイルでプロンプトを生成
-    - [x] 要約をストリームで送る
-  - [x] `/api/submit`: 要約データ送信受付
-    - [ ] `/api/submit`: SQLite等を用いた要約履歴のサーバーサイドでの永続化
 
 # 📚🔗参考リンク
 
