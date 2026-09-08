@@ -1,6 +1,6 @@
 # services/summarization.py
 
-from services.ollama import generate
+from services.ollama import generate, generate_stream
 
 
 def summarize_text(text, summary_type):
@@ -12,6 +12,21 @@ def summarize_text(text, summary_type):
 
     return generate(prompt)
 
+def summarize_text_stream(text, summary_type):
+    """
+    要約をストリーミング形式で生成する。
+
+    Ollamaが生成した文章を、
+    生成された順番に返す。
+    """
+
+    prompt = build_prompt(
+        text,
+        summary_type
+    )
+
+    for chunk in generate_stream(prompt):
+        yield chunk
 
 def build_prompt(text, summary_type):
 

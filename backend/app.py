@@ -1,13 +1,29 @@
 from pathlib import Path
-from flask import Flask, request, jsonify, redirect, url_for
+
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    redirect,
+    url_for,
+    Response,
+    stream_with_context
+)
 
 from services.transcription import transcribe_audio
-from services.summarization import summarize_text
+from services.summarization import (
+    summarize_text,
+    summarize_text_stream
+)
 
 
-# プロジェクトルート直下の frontend ディレクトリの絶対パスを導出
+# ==========================================
+# プロジェクトルート直下の frontend ディレクトリ
+# ==========================================
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+
 
 app = Flask(
     __name__,
@@ -24,8 +40,10 @@ app = Flask(
 def transcribe():
 
     try:
+
         # フロントエンドから音声ファイルを受け取る
         if "audio" not in request.files:
+
             return jsonify({
                 "success": False,
                 "error": "音声ファイルがありません"
@@ -57,10 +75,12 @@ def transcribe():
 def summarize():
 
     try:
+
         # フロントエンドからJSONを受け取る
         data = request.get_json()
 
         if not data:
+
             return jsonify({
                 "success": False,
                 "error": "JSONデータがありません"
@@ -74,6 +94,7 @@ def summarize():
 
         # textの確認
         if not text:
+
             return jsonify({
                 "success": False,
                 "error": "textがありません"
@@ -81,23 +102,60 @@ def summarize():
 
         # summary_typeの確認
         if not summary_type:
+
             return jsonify({
                 "success": False,
                 "error": "summary_typeがありません"
             }), 400
 
-        # Ollamaを使って要約
-        summary = summarize_text(
+        # 要約形式が正しいか確認
+        # ストリーミング開始前に確認する
+        from services.summarization import build_prompt
+
+        build_prompt(
             text,
             summary_type
         )
 
-        # フロントエンドへ要約結果を返す
-        return jsonify({
-            "success": True,
-            "summary_type": summary_type,
-            "summary": summary
-        }), 200
+        # ======================================
+        # ストリーミング処理
+        # ======================================
+
+        @stream_with_context
+        def generate_summary():
+
+            try:
+
+                # 要約を少しずつ生成
+                for chunk in summarize_text_stream(
+                    text,
+                    summary_type
+                ):
+
+                    # 生成された文章を
+                    # そのままフロントエンドへ送信
+                    yield chunk
+
+            except Exception as e:
+
+                # ストリーミング途中でエラーが発生した場合
+                yield f"\n\n[ERROR] {str(e)}"
+
+        return Response(
+            generate_summary(),
+            status=200,
+            mimetype="text/plain; charset=utf-8",
+            headers={
+                # プロキシなどによるバッファリングを防ぐ
+                "X-Accel-Buffering": "no",
+
+                # キャッシュさせない
+                "Cache-Control": "no-cache",
+
+                # 接続を維持
+                "Connection": "keep-alive"
+            }
+        )
 
     except ValueError as e:
 
@@ -124,10 +182,12 @@ def summarize():
 def submit():
 
     try:
+
         # フロントエンドからJSONを受け取る
         data = request.get_json()
 
         if not data:
+
             return jsonify({
                 "success": False,
                 "error": "JSONデータがありません"
@@ -137,6 +197,7 @@ def submit():
         summary = data.get("summary")
 
         if not summary:
+
             return jsonify({
                 "success": False,
                 "error": "summaryがありません"
@@ -161,19 +222,28 @@ def submit():
             "error": str(e)
         }), 500
 
+
 # ==========================================
 # `/`: ルートをstatic/へ転送する
 # ==========================================
 
-@app.route('/')
+@app.route("/")
 def index():
-    return redirect(url_for('static', filename='index.html'))
+
+    return redirect(
+        url_for(
+            "static",
+            filename="index.html"
+        )
+    )
+
 
 # ==========================================
 # Flask起動
 # ==========================================
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000,
