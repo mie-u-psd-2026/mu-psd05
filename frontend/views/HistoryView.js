@@ -1,6 +1,8 @@
 import store, { SUMMARY_STYLES } from '../store.js';
 import { loadTemplate } from '../services/templateLoader.js';
 
+const dateFormatter = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' });
+
 export default {
   name: 'HistoryView',
   data() {
@@ -10,9 +12,9 @@ export default {
     };
   },
   computed: {
-    // 要約または文字起こしの処理実行中判定
+    // 処理実行中判定
     isProcessing() {
-      return this.store.isSummarizing || this.store.isTranscribing;
+      return this.store.isBusy;
     }
   },
   methods: {
@@ -20,17 +22,16 @@ export default {
     getStyleInfo(styleId) {
       return SUMMARY_STYLES.find(s => s.id === styleId) || { name: '要約', icon: 'bi-file-text' };
     },
-    // 日時文字列のフォーマット (YYYY/MM/DD HH:mm)
+    // 日時文字列のフォーマット
     formatDate(timestamp) {
       if (!timestamp) return '';
       const d = new Date(timestamp);
       if (isNaN(d.getTime())) return '';
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const hh = String(d.getHours()).padStart(2, '0');
-      const min = String(d.getMinutes()).padStart(2, '0');
-      return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+      try {
+        return dateFormatter.format(d);
+      } catch (_) {
+        return '';
+      }
     },
     // 履歴アイテムを選択してメイン画面へ復元
     handleSelect(item) {

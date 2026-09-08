@@ -9,19 +9,25 @@ export const SUMMARY_STYLES = [
     id: 'short',
     name: '簡潔',
     icon: 'bi-lightning-charge',
-    desc: '重要な情報だけで3〜5文にまとめる'
+    desc: '重要な情報だけで3〜5文にまとめます'
   },
   {
     id: 'meeting',
     name: '議事録',
     icon: 'bi-journal-text',
-    desc: '内容を4項目に整理します。\n項目：「会議概要」「決定事項」「課題」「次のアクション」'
+    desc: '内容を4項目に整理します：「会議概要」「決定事項」「課題」「次のアクション」'
   },
   {
     id: 'report',
     name: 'レポート',
     icon: 'bi-file-earmark-text',
-    desc: '論理的に、概要、詳細、結論の3段構成でまとめる'
+    desc: '論理的に、概要、詳細、結論の3段構成でまとめます'
+  },
+  {
+    id: 'bullet',
+    name: '箇条書き',
+    icon: 'bi-list-ol',
+    desc: '要点を箇条書きで並べます'
   }
 ];
 
@@ -34,6 +40,10 @@ const store = reactive({
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
+  // 要約・文字起こし・録音のいずれかが進行中か判定する算出プロパティ
+  get isBusy() {
+    return this.isSummarizing || this.isRecording || this.isTranscribing;
+  },
   recordSeconds: 0,
   // 録音時間のフォーマット表示（MM:SS）
   get formattedRecordTime() {
@@ -41,38 +51,35 @@ const store = reactive({
     const s = (this.recordSeconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   },
+  lastTranscribeTimeMs: null,
+  lastSummarizeTimeMs: null,
   errorMessage: '',
-  histories: [],
+  historyItems: [],
   samples: [],
   toast: {
     show: false,
     message: '',
     variant: 'primary',
-    timestamp: 0
+    id: null
   },
 
   // 初期化処理
   async init() {
-    storage.cleanupExpiredData();
-    this.histories = storage.getHistories();
+    this.historyItems = storage.getHistory();
 
     const savedStyle = storage.getSelectedStyle();
     if (savedStyle && SUMMARY_STYLES.some(s => s.id === savedStyle)) {
       this.selectedStyle = savedStyle;
     }
 
-    const draft = storage.loadDraft();
-    if (draft) {
-      if (typeof draft.inputText === 'string') {
-        this.inputText = draft.inputText;
+    const sessionState = storage.loadSessionState();
+    if (sessionState) {
+      if (typeof sessionState.inputText === 'string') {
+        this.inputText = sessionState.inputText;
       }
-      if (typeof draft.resultText === 'string') {
-        this.resultText = draft.resultText;
+      if (typeof sessionState.resultText === 'string') {
+        this.resultText = sessionState.resultText;
       }
-    }
-
-    if (typeof window !== 'undefined') {
-      window.store = this;
     }
 
     // サンプル文章データの非同期読み込み
@@ -98,8 +105,15 @@ const store = reactive({
       return;
     }
     this.inputText = sample.text;
-    this.setDraft();
+    this.setSessionState();
     // this.showToast(`「${sample.title}」のサンプル文章を挿入しました`, 'info');
+  },
+
+  // スタイル選択と永続化
+  setSelectedStyle(styleId) {
+    if (!styleId || typeof styleId !== 'string') return;
+    this.selectedStyle = styleId;
+    storage.saveSelectedStyle(styleId);
   },
 
   // 現在の要約入出力をリセット
@@ -107,15 +121,27 @@ const store = reactive({
     this.inputText = '';
     this.resultText = '';
     this.errorMessage = '';
-    storage.clearDraft();
+    this.lastTranscribeTimeMs = null;
+    this.lastSummarizeTimeMs = null;
+    if (this.isRecording) {
+      this.cancelRecording();
+    }
+    storage.clearSessionState();
   },
 
-  // 下書き保存
-  setDraft() {
-    storage.saveDraft({
+  // セッション状態保存
+  setSessionState() {
+    storage.saveSessionState({
       inputText: this.inputText,
       resultText: this.resultText
     });
+  },
+
+  // 音声認識成功時の共通処理
+  handleTranscriptionSuccess(text) {
+    this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
+    this.setSessionState();
+    this.showToast('文字起こしが完了しました', 'success');
   },
 
   // 録音のキャンセル・中断（文字起こしは実行せずリソースのみ解放）
@@ -131,9 +157,11 @@ const store = reactive({
 
   // 音声録音の開始
   async startRecording() {
-    if (this.isRecording || this.isSummarizing || this.isTranscribing) {
+    if (this.isBusy) {
       return;
     }
+    this.isRecording = true;
+    this.recordSeconds = 0;
     try {
       await audio.startRecording({
         onTick: () => {
@@ -144,10 +172,32 @@ const store = reactive({
           this.cancelRecording();
         }
       });
-      this.isRecording = true;
-      this.recordSeconds = 0;
     } catch (err) {
+      this.isRecording = false;
+      this.recordSeconds = 0;
       this.showToast('マイクが利用できません: ' + err.message, 'danger');
+    }
+  },
+
+  // 文字起こし実行の共通内部ヘルパー
+  async _runTranscription(audioBlobOrFile) {
+    this.isTranscribing = true;
+    const startTime = Date.now();
+    try {
+      const text = await api.transcribeAudio(audioBlobOrFile);
+      if (text && text.trim()) {
+        this.lastTranscribeTimeMs = Date.now() - startTime;
+        this.handleTranscriptionSuccess(text);
+      } else {
+        this.lastTranscribeTimeMs = null;
+        this.showToast('音声を認識できませんでした', 'info');
+      }
+    } catch (err) {
+      this.lastTranscribeTimeMs = null;
+      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
+    } finally {
+      this.isTranscribing = false;
+      this.recordSeconds = 0;
     }
   },
 
@@ -157,28 +207,29 @@ const store = reactive({
       return;
     }
     this.isRecording = false;
-    this.isTranscribing = true;
+    let blob;
     try {
-      const blob = await audio.stopRecording();
-      const text = await api.transcribeAudio(blob);
-      if (text) {
-        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
-        this.setDraft();
-        this.showToast('文字起こしが完了しました', 'success');
-      }
+      blob = await audio.stopRecording();
     } catch (err) {
-      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
-    } finally {
-      this.isTranscribing = false;
       this.recordSeconds = 0;
+      this.showToast('録音の停止に失敗しました: ' + err.message, 'danger');
+      return;
     }
+
+    if (!blob || blob.size === 0) {
+      this.recordSeconds = 0;
+      this.showToast('録音時間が短すぎるため破棄しました', 'info');
+      return;
+    }
+
+    await this._runTranscription(blob);
   },
 
   // 音声ファイルの文字起こし
   async transcribeAudioFile(file) {
     if (!file) return;
 
-    if (this.isSummarizing || this.isRecording || this.isTranscribing) {
+    if (this.isBusy) {
       this.showToast('処理中です。終了してからもう一度操作してください', 'warning');
       return;
     }
@@ -199,19 +250,7 @@ const store = reactive({
       return;
     }
 
-    this.isTranscribing = true;
-    try {
-      const text = await api.transcribeAudio(file);
-      if (text) {
-        this.inputText = (this.inputText ? this.inputText + '\n' : '') + text;
-        this.setDraft();
-        this.showToast('文字が起こし完了しました', 'success');
-      }
-    } catch (err) {
-      this.showToast('文字起こしに失敗しました: ' + err.message, 'danger');
-    } finally {
-      this.isTranscribing = false;
-    }
+    await this._runTranscription(file);
   },
 
   // 要約実行
@@ -219,12 +258,13 @@ const store = reactive({
     const targetText = this.inputText.trim();
     const targetStyle = this.selectedStyle;
 
-    if (!targetText || this.isSummarizing) {
+    if (!targetText || this.isBusy) {
       return;
     }
 
     this.isSummarizing = true;
     this.errorMessage = '';
+    const startTime = Date.now();
 
     try {
       const summary = await api.summarizeText({
@@ -239,14 +279,16 @@ const store = reactive({
         selectedStyle: targetStyle
       });
 
-      this.histories.unshift(item);
-      if (this.histories.length > 100) {
-        this.histories.pop();
+      this.historyItems.unshift(item);
+      if (this.historyItems.length > storage.MAX_HISTORY_ITEMS) {
+        this.historyItems.pop();
       }
 
-      this.setDraft();
+      this.setSessionState();
+      this.lastSummarizeTimeMs = Date.now() - startTime;
       this.showToast('要約が完了しました', 'success');
     } catch (err) {
+      this.lastSummarizeTimeMs = null;
       this.errorMessage = err.message || '要約中にエラーが発生しました';
       this.showToast(this.errorMessage, 'danger');
     } finally {
@@ -257,19 +299,20 @@ const store = reactive({
   // 履歴アイテム削除
   deleteHistoryItem(id) {
     storage.deleteHistory(id);
-    this.histories = this.histories.filter(h => h.id !== id);
+    this.historyItems = this.historyItems.filter(h => h.id !== id);
     this.showToast('履歴を削除しました', 'info');
   },
 
   // 履歴をメイン入力へ反映
   loadHistoryToMain(item) {
+    this.errorMessage = '';
     this.inputText = item.inputText || '';
     this.resultText = item.resultText || '';
     const styleCandidate = item.selectedStyle;
     this.selectedStyle = (styleCandidate && SUMMARY_STYLES.some(s => s.id === styleCandidate))
       ? styleCandidate
       : 'short';
-    this.setDraft();
+    this.setSessionState();
   },
 
   // トースト表示
@@ -277,7 +320,7 @@ const store = reactive({
     this.toast.message = message;
     this.toast.variant = variant;
     this.toast.show = true;
-    this.toast.timestamp = Date.now();
+    this.toast.id = storage.generateId();
   }
 });
 

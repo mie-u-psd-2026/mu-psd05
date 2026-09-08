@@ -1,3 +1,4 @@
+// HTMLテンプレートの非同期読み込みとキャッシュを管理
 const templateCache = new Map();
 
 /**

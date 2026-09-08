@@ -2,7 +2,7 @@
 import WaveSurfer from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/plugins/record';
 
-let ws = null;
+let wavesurfer = null;
 let micStream = null;
 
 // 波形ビジュアライザーの描画開始
@@ -20,7 +20,7 @@ export function startVisualizer(container, stream) {
       renderRecordedAudio: false
     });
 
-    ws = WaveSurfer.create({
+    wavesurfer = WaveSurfer.create({
       container,
       waveColor: '#0d6efd',
       height: 24,
@@ -46,10 +46,10 @@ export function stopVisualizer() {
     } catch (_) {}
     micStream = null;
   }
-  if (ws) {
+  if (wavesurfer) {
     try {
-      ws?.destroy();
+      wavesurfer?.destroy();
     } catch (_) {}
-    ws = null;
+    wavesurfer = null;
   }
 }

@@ -4,9 +4,8 @@
       <h2 class="card-title mb-3">
         <app-brand icon-size="fs-2" text-size="fs-3"></app-brand>
       </h2>
-      <p class="card-text text-secondary leading-relaxed mb-0">
-        テキストや音声入力をAIで素早く要約・文字起こしするシングルページアプリケーション（SPA）です。<br>
-        簡潔要約・会議議事録・レポート形式など、用途に応じたスタイルで出力できます。
+      <p class="card-text text-body-secondary lh-lg mb-0">
+        テキストや音声入力を言語モデルで要約します！
       </p>
     </div>
   </div>
@@ -18,7 +17,7 @@
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
+          <thead class="table-secondary">
             <tr>
               <th scope="col" style="width: 25%;">ライブラリ</th>
               <th scope="col" style="width: 15%;">バージョン</th>
@@ -30,7 +29,7 @@
             <tr v-for="lib in libraries" :key="lib.name">
               <td class="fw-medium">{{ lib.name }}</td>
               <td>{{ lib.version }}</td>
-              <td><span class="badge bg-secondary">{{ lib.license }}</span></td>
+              <td><span class="badge bg-body-secondary text-body">{{ lib.license }}</span></td>
               <td>
                 <a :href="lib.url" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
                   {{ lib.siteName }} <i class="bi bi-box-arrow-up-right small"></i>

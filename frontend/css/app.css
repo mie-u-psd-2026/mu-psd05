@@ -1,0 +1,15 @@
+.app-sidebar {
+  width: 230px;
+}
+
+.app-toast-container {
+  z-index: 1090;
+}
+
+.text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}

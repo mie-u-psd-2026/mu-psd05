@@ -33,7 +33,7 @@ export default {
   },
   watch: {
     // DOM更新完了後にコールバックを実行するため flush: 'post' を指定
-    'store.toast.timestamp': {
+    'store.toast.id': {
       handler() {
         this.triggerToast();
       },
@@ -75,7 +75,7 @@ export default {
     }
   },
   template: `
-    <div class="toast-container position-fixed bottom-0 end-0 p-3 d-print-none" style="z-index: 1090;">
+    <div class="app-toast-container toast-container position-fixed bottom-0 end-0 p-3 d-print-none">
       <div
         ref="toastRef"
         class="toast fade align-items-center border-0"
@@ -91,7 +91,8 @@ export default {
           </div>
           <button
             type="button"
-            class="btn-close btn-close-white me-2 m-auto"
+            class="btn-close me-2 m-auto"
+            data-bs-theme="dark"
             data-bs-dismiss="toast"
             aria-label="Close"
           ></button>
