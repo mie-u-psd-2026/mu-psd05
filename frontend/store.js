@@ -27,7 +27,7 @@ export const SUMMARY_STYLES = [
     id: 'bullet',
     name: '箇条書き',
     icon: 'bi-list-ol',
-    desc: '要点を箇条書きで並べます'
+    desc: '要点を数個の箇条書きでまとめます'
   }
 ];
 

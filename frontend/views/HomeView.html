@@ -177,17 +177,18 @@
                 <i :class="style.icon" class="fs-5 me-2"></i>
                 <span class="fw-medium">{{ style.name }}</span>
               </button>
-              <button
-                type="button"
+              <a
+                tabindex="0"
+                role="button"
                 class="btn btn-sm p-1 me-3 text-body-secondary"
                 :class="{ 'text-reset': store.selectedStyle === style.id }"
                 v-popover
+                data-bs-title="スタイル詳細"
                 :data-bs-content="style.desc"
-                title="スタイル詳細"
                 aria-label="スタイル詳細"
               >
                 <i class="bi bi-info-circle"></i>
-              </button>
+              </a>
             </div>
           </div>
         </div>
