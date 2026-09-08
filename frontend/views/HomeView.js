@@ -178,6 +178,9 @@ export default {
     if (this.store.isRecording) {
       this.store.cancelRecording();
     }
+    if (this.store.isSummarizing) {
+      this.store.cancelSummarize();
+    }
   },
   template: await loadTemplate(import.meta.url, './HomeView.html')
 };

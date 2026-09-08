@@ -40,6 +40,7 @@ const store = reactive({
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
+  summarizeAbortController: null,
   // 要約・文字起こし・録音のいずれかが進行中か判定する算出プロパティ
   get isBusy() {
     return this.isSummarizing || this.isRecording || this.isTranscribing;
@@ -126,7 +127,19 @@ const store = reactive({
     if (this.isRecording) {
       this.cancelRecording();
     }
+    if (this.isSummarizing) {
+      this.cancelSummarize();
+    }
     storage.clearSessionState();
+  },
+
+  // 要約処理の中断
+  cancelSummarize() {
+    if (this.summarizeAbortController) {
+      this.summarizeAbortController.abort();
+      this.summarizeAbortController = null;
+    }
+    this.isSummarizing = false;
   },
 
   // セッション状態保存
@@ -264,14 +277,21 @@ const store = reactive({
 
     this.isSummarizing = true;
     this.errorMessage = '';
+    this.resultText = '';
     const startTime = Date.now();
+    this.summarizeAbortController = new AbortController();
 
     try {
-      const summary = await api.summarizeText({
-        text: targetText,
-        summaryType: targetStyle
-      });
-      this.resultText = summary;
+      const summary = await api.summarizeTextStream(
+        {
+          text: targetText,
+          summaryType: targetStyle
+        },
+        (chunk) => {
+          this.resultText += chunk;
+        },
+        this.summarizeAbortController.signal
+      );
 
       const item = storage.saveHistory({
         inputText: targetText,
@@ -289,10 +309,20 @@ const store = reactive({
       this.showToast('要約が完了しました', 'success');
     } catch (err) {
       this.lastSummarizeTimeMs = null;
-      this.errorMessage = err.message || '要約中にエラーが発生しました';
-      this.showToast(this.errorMessage, 'danger');
+      const isAborted =
+        err.message === '要約を中断しました' ||
+        err.name === 'AbortError' ||
+        (typeof err.message === 'string' && err.message.toLowerCase().includes('aborted'));
+
+      if (isAborted) {
+        this.showToast('要約を中断しました', 'info');
+      } else {
+        this.errorMessage = err.message || '要約中にエラーが発生しました';
+        this.showToast(this.errorMessage, 'danger');
+      }
     } finally {
       this.isSummarizing = false;
+      this.summarizeAbortController = null;
     }
   },
 
