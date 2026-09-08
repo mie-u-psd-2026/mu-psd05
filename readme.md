@@ -1,30 +1,25 @@
-# 生成AI活用サンプルアプリ
+# OtoMatome : 生成AI活用サンプルアプリ
+
+OtoMatomeは、生成AI（LLM）を活用した音声入力の要約・整理ができる、ブラウザ上で動作するアプリケーションです。
 
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-3.1.3-000000?logo=flask&logoColor=white)
 ![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vuedotjs&logoColor=white)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)
 ![Ollama](https://img.shields.io/badge/Ollama-qwen3.5:0.8b-black?logo=ollama&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-lightgrey)
-
-# 概要
-
-このアプリはPythonとVue.jsを用いて作られた簡易的な生成AI活用アプリです。
-
-ブラウザ上で動作し、録音からの文字起こし、ローカルLLMでの要約、要約履歴機能を持ちます。
-
-- フロントエンド: Vue.jsとBootstrap 5.3のCDN版を用いています。
-- バックエンド: Python, FlaskとOllama APIを用いてローカル起動のOllamaを叩いています。
 
 ![](./images/screenshot1.jpeg)
 
-## 📖関連ドキュメント
+## 📖ドキュメント
 
-- [Webアプリ仕様書](./design-document.md): 機能要件・APIエンドポイント仕様
-- [Webアプリ画面設計](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
-- [テスト仕様書](./test-spec.md): 機能検証・APIテスト仕様
+- [仕様書（design-document.md）](./design-document.md): 機能要件・APIエンドポイント仕様
+- [画面設計（design-document-page.md）](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
+- [テスト仕様（test-spec.md）](./test-spec.md): 機能検証・APIテスト
 
 # 🏗️ アーキテクチャ構成
+
+- フロントエンド: Vue.jsとBootstrap 5.3のCDN版を用いています。
+- バックエンド: Python, FlaskとOllama APIを用いてローカル起動のOllamaを叩いています。
 
 ```mermaid
 flowchart LR
