@@ -57,7 +57,7 @@ python backend/app.py
 **🧰ツール一覧：**
 
 - [Visual Studio Code](https://code.visualstudio.com/)
-- [Python](https://www.python.org/)
+- [Python 3.13](https://www.python.org/)
 - [OpenCode](https://opencode.ai/ja)
 - [Ollama](https://ollama.com/)
 
