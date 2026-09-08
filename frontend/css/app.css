@@ -13,3 +13,10 @@
   overflow: hidden;
   word-break: break-word;
 }
+
+@media (min-width: 992px) {
+  .position-lg-absolute {
+    position: absolute !important;
+  }
+}
+

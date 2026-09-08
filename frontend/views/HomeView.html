@@ -158,39 +158,41 @@
 
     <!-- 右上 要約スタイル選択エリア (col-12 col-lg-4) -->
     <div class="col-12 col-lg-4 d-print-none">
-      <div class="card h-100 shadow-sm border">
-        <div class="card-header bg-transparent py-3">
-          <h5 class="mb-0 fw-semibold">要約スタイル</h5>
-        </div>
-        <div class="card-body">
-          <div class="list-group">
-            <div
-              v-for="style in styles"
-              :key="style.id"
-              class="list-group-item d-flex justify-content-between align-items-center p-0"
-              :class="{ active: store.selectedStyle === style.id }"
-            >
-              <button
-                type="button"
-                class="btn border-0 text-start d-flex align-items-center flex-grow-1 py-3 ps-3 pe-2 bg-transparent text-reset text-decoration-none shadow-none"
-                :disabled="store.isSummarizing"
-                @click="store.setSelectedStyle(style.id)"
+      <div class="h-100 position-relative">
+        <div class="card h-100 shadow-sm border position-lg-absolute top-0 start-0 w-100">
+          <div class="card-header bg-transparent py-3">
+            <h5 class="mb-0 fw-semibold">要約スタイル</h5>
+          </div>
+          <div class="card-body overflow-y-auto">
+            <div class="list-group">
+              <div
+                v-for="style in styles"
+                :key="style.id"
+                class="list-group-item d-flex justify-content-between align-items-center p-0"
+                :class="{ active: store.selectedStyle === style.id }"
               >
-                <i :class="style.icon" class="fs-5 me-2"></i>
-                <span class="fw-medium">{{ style.name }}</span>
-              </button>
-              <a
-                tabindex="0"
-                role="button"
-                class="btn btn-sm p-1 me-3 text-body-secondary"
-                :class="{ 'text-reset': store.selectedStyle === style.id }"
-                v-popover
-                data-bs-title="スタイル詳細"
-                :data-bs-content="style.desc"
-                aria-label="スタイル詳細"
-              >
-                <i class="bi bi-info-circle"></i>
-              </a>
+                <button
+                  type="button"
+                  class="btn border-0 text-start d-flex align-items-center flex-grow-1 py-3 ps-3 pe-2 bg-transparent text-reset text-decoration-none shadow-none"
+                  :disabled="store.isSummarizing"
+                  @click="store.setSelectedStyle(style.id)"
+                >
+                  <i :class="style.icon" class="fs-5 me-2"></i>
+                  <span class="fw-medium">{{ style.name }}</span>
+                </button>
+                <a
+                  tabindex="0"
+                  role="button"
+                  class="btn btn-sm p-1 me-3 text-body-secondary"
+                  :class="{ 'text-reset': store.selectedStyle === style.id }"
+                  v-popover
+                  data-bs-title="スタイル詳細"
+                  :data-bs-content="style.desc"
+                  aria-label="スタイル詳細"
+                >
+                  <i class="bi bi-info-circle"></i>
+                </a>
+              </div>
             </div>
           </div>
         </div>

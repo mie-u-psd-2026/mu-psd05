@@ -3,33 +3,21 @@ import * as storage from './services/storage.js';
 import * as api from './services/api.js';
 import * as audio from './services/audio.js';
 
-// 要約スタイル定数定義
-export const SUMMARY_STYLES = [
-  {
-    id: 'short',
-    name: '簡潔',
-    icon: 'bi-lightning-charge',
-    desc: '重要な情報だけで3〜5文にまとめます'
-  },
-  {
-    id: 'meeting',
-    name: '議事録',
-    icon: 'bi-journal-text',
-    desc: '内容を4項目に整理します：「会議概要」「決定事項」「課題」「次のアクション」'
-  },
-  {
-    id: 'report',
-    name: 'レポート',
-    icon: 'bi-file-earmark-text',
-    desc: '論理的に、概要、詳細、結論の3段構成でまとめます'
-  },
-  {
-    id: 'bullet',
-    name: '箇条書き',
-    icon: 'bi-list-ol',
-    desc: '要点を数個の箇条書きでまとめます'
+// 共通JSONデータローダー関数
+async function loadJsonData(relativePath, fallback = []) {
+  try {
+    const url = new URL(relativePath, import.meta.url).href;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : fallback;
+    }
+    console.warn(`[store] ${relativePath} の取得に失敗しました (HTTP ${res.status})`);
+  } catch (err) {
+    console.warn(`[store] ${relativePath} の読み込み中にエラーが発生しました:`, err);
   }
-];
+  return fallback;
+}
 
 // アプリケーション全体の状態管理ストア
 const store = reactive({
@@ -37,6 +25,7 @@ const store = reactive({
   inputText: '',
   resultText: '',
   selectedStyle: 'short',
+  summaryStyles: [],
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
@@ -69,11 +58,6 @@ const store = reactive({
   async init() {
     this.historyItems = storage.getHistory();
 
-    const savedStyle = storage.getSelectedStyle();
-    if (savedStyle && SUMMARY_STYLES.some(s => s.id === savedStyle)) {
-      this.selectedStyle = savedStyle;
-    }
-
     const sessionState = storage.loadSessionState();
     if (sessionState) {
       if (typeof sessionState.inputText === 'string') {
@@ -84,20 +68,19 @@ const store = reactive({
       }
     }
 
-    // サンプル文章データの非同期読み込み
-    try {
-      const sampleUrl = new URL('./data/samples.json', import.meta.url).href;
-      const res = await fetch(sampleUrl);
-      if (res.ok) {
-        const data = await res.json();
-        this.samples = Array.isArray(data) ? data : [];
-      } else {
-        console.warn(`[store] samples.json の取得に失敗しました (HTTP ${res.status})`);
-        this.samples = [];
-      }
-    } catch (err) {
-      console.warn('[store] samples.json の読み込み中にエラーが発生しました:', err);
-      this.samples = [];
+    // JSONデータの並列非同期読み込み
+    const [styles, samples] = await Promise.all([
+      loadJsonData('./data/summaryStyles.json'),
+      loadJsonData('./data/samples.json')
+    ]);
+    this.summaryStyles = styles;
+    this.samples = samples;
+
+    const savedStyle = storage.getSelectedStyle();
+    if (savedStyle && this.summaryStyles.some(s => s.id === savedStyle)) {
+      this.selectedStyle = savedStyle;
+    } else if (this.summaryStyles.length > 0) {
+      this.selectedStyle = this.summaryStyles[0].id;
     }
   },
 
@@ -344,9 +327,9 @@ const store = reactive({
     this.inputText = item.inputText || '';
     this.resultText = item.resultText || '';
     const styleCandidate = item.selectedStyle;
-    this.selectedStyle = (styleCandidate && SUMMARY_STYLES.some(s => s.id === styleCandidate))
+    this.selectedStyle = (styleCandidate && this.summaryStyles.some(s => s.id === styleCandidate))
       ? styleCandidate
-      : 'short';
+      : (this.summaryStyles[0]?.id || 'short');
     this.setSessionState();
   },
 

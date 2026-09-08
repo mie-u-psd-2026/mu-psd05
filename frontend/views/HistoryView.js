@@ -1,4 +1,4 @@
-import store, { SUMMARY_STYLES } from '../store.js';
+import store from '../store.js';
 import { loadTemplate } from '../services/templateLoader.js';
 
 const dateFormatter = new Intl.DateTimeFormat('ja-JP', { dateStyle: 'short', timeStyle: 'short' });
@@ -20,7 +20,7 @@ export default {
   methods: {
     // 要約スタイル情報の取得
     getStyleInfo(styleId) {
-      return SUMMARY_STYLES.find(s => s.id === styleId) || { name: '要約', icon: 'bi-file-text' };
+      return this.store.summaryStyles.find(s => s.id === styleId) || { name: '要約', icon: 'bi-file-text' };
     },
     // 日時文字列のフォーマット
     formatDate(timestamp) {
