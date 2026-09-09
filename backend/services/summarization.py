@@ -1,140 +1,132 @@
 # services/summarization.py
 
-from services.ollama import generate, generate_stream
+from pathlib import Path
+
+from services.ollama import (
+    generate,
+    generate_stream
+)
 
 
-def summarize_text(text, summary_type):
+# ==========================================
+# promptsディレクトリ
+# ==========================================
+
+# services/summarization.py
+#        ↓
+# backend/
+#        ↓
+# prompts/
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+PROMPTS_DIR = BASE_DIR / "prompts"
+
+
+# ==========================================
+# プロンプト読み込み
+# ==========================================
+
+def load_prompts():
     """
-    文字起こしされた文章を、
-    指定された形式で要約する。
+    promptsフォルダにあるtxtファイルを
+    自動的に読み込む。
+
+    例えば、
+
+    prompts/
+        short.txt
+        bullet.txt
+        meeting.txt
+
+    の場合、
+
+    {
+        "short": "short.txtの内容",
+        "bullet": "bullet.txtの内容",
+        "meeting": "meeting.txtの内容"
+    }
+
+    という辞書を作成する。
     """
 
-    prompt = build_prompt(
-        text,
-        summary_type
-    )
+    prompts = {}
 
-    return generate(prompt)
+    # promptsフォルダが存在しない場合
+    if not PROMPTS_DIR.exists():
+
+        return prompts
+
+    # .txtファイルをすべて取得
+    for file_path in PROMPTS_DIR.glob("*.txt"):
+
+        # 拡張子を除いたファイル名をキーにする
+        #
+        # short.txt
+        #   ↓
+        # short
+        key = file_path.stem
+
+        # UTF-8でファイルを読み込む
+        prompt_text = file_path.read_text(
+            encoding="utf-8"
+        ).strip()
+
+        prompts[key] = prompt_text
+
+    return prompts
 
 
-def summarize_text_stream(text, summary_type):
+# ==========================================
+# 要約形式一覧取得
+# ==========================================
+
+def get_summary_types():
     """
-    要約をストリーミング形式で生成する。
+    利用可能な要約形式の一覧を返す。
 
-    Ollamaが生成した文章を、
-    生成された順番に返す。
+    promptsフォルダに
+
+        short.txt
+        bullet.txt
+        meeting.txt
+
+    があれば、
+
+        ["short", "bullet", "meeting"]
+
+    を返す。
     """
 
-    prompt = build_prompt(
-        text,
-        summary_type
-    )
+    prompts = load_prompts()
 
-    for chunk in generate_stream(prompt):
-        yield chunk
+    return list(prompts.keys())
 
+
+# ==========================================
+# プロンプト作成
+# ==========================================
 
 def build_prompt(text, summary_type):
+    """
+    指定された要約形式のtxtファイルを読み込み、
+    Ollamaに渡すプロンプトを作成する。
+    """
 
-    if summary_type == "short":
+    # promptsフォルダの内容を読み込む
+    prompts = load_prompts()
 
-        instruction = """
-以下の文章を簡潔に要約してください。
-
-まず、元の文章の意味を変えない範囲で、
-文章として自然になるように「、」と「。」を補ってください。
-
-その後、重要な情報だけを残し、
-3～5文程度で要約してください。
-
-要約した文章にも自然な「、」「。」を使用してください。
-"""
-
-
-    elif summary_type == "bullet":
-
-        instruction = """
-以下の文章を重要なポイントごとに箇条書きで要約してください。
-
-まず、元の文章の意味を変えない範囲で、
-文章として自然になるように「、」と「。」を補ってください。
-
-その後、重要な内容を整理して箇条書きにしてください。
-
-次の形式で出力してください。
-
-・重要な内容1
-・重要な内容2
-・重要な内容3
-
-重要度の低い情報は省略してください。
-箇条書きの数は文章の内容に応じて適切に調整してください。
-
-各箇条書きの文章には、
-自然な「、」と「。」を使用してください。
-"""
-
-
-    elif summary_type == "meeting":
-
-        instruction = """
-以下の会議内容を整理してください。
-
-まず、元の文章の意味を変えない範囲で、
-文章として自然になるように「、」と「。」を補ってください。
-
-その後、会議内容を整理してください。
-
-次の形式で出力してください。
-
-【会議概要】
-会議全体の概要
-
-【決定事項】
-決定した内容
-
-【課題】
-現在の課題
-
-【次のアクション】
-今後行うこと
-
-各項目では、自然な「、」と「。」を使用してください。
-"""
-
-
-    elif summary_type == "report":
-
-        instruction = """
-以下の文章をレポート形式に整理してください。
-
-まず、元の文章の意味を変えない範囲で、
-文章として自然になるように「、」と「。」を補ってください。
-
-その後、重要な内容を整理してレポート形式にしてください。
-
-次の形式で出力してください。
-
-【概要】
-文章全体の概要
-
-【詳細】
-重要な内容を整理
-
-【結論】
-文章から読み取れる結論
-
-各項目では、自然な「、」と「。」を使用してください。
-"""
-
-
-    else:
+    # 指定された要約形式が存在するか確認
+    if summary_type not in prompts:
 
         raise ValueError(
             f"対応していない要約形式です: {summary_type}"
         )
 
+    # txtファイルに書かれている指示
+    instruction = prompts[summary_type]
 
+    # Ollamaに送るプロンプト
     prompt = f"""
 あなたは日本語の文章を整理・要約するAIです。
 
@@ -156,3 +148,66 @@ def build_prompt(text, summary_type):
 """
 
     return prompt
+
+
+# ==========================================
+# 通常の要約
+# ==========================================
+
+def summarize_text(
+    text,
+    summary_type,
+    model=None
+):
+    """
+    文字起こしされた文章を、
+    指定された形式で要約する。
+
+    modelを指定すると、
+    そのモデルをOllamaで使用する。
+
+    modelを指定しない場合は、
+    Ollama側のデフォルトモデルを使用する。
+    """
+
+    prompt = build_prompt(
+        text,
+        summary_type
+    )
+
+    return generate(
+        prompt,
+        model=model
+    )
+
+
+# ==========================================
+# ストリーミング要約
+# ==========================================
+
+def summarize_text_stream(
+    text,
+    summary_type,
+    model=None
+):
+    """
+    要約をストリーミング形式で生成する。
+
+    Ollamaが生成した文章を、
+    生成された順番に返す。
+
+    modelを指定すると、
+    そのモデルを使用する。
+    """
+
+    prompt = build_prompt(
+        text,
+        summary_type
+    )
+
+    for chunk in generate_stream(
+        prompt,
+        model=model
+    ):
+
+        yield chunk
