@@ -32,18 +32,22 @@ async function requestJson(url, options = {}, { timeoutMs = DEFAULT_TIMEOUT_MS, 
 }
 
 // テキスト要約API呼び出し (ストリーミング対応)
-export async function summarizeTextStream({ text, summaryType } = {}, onChunk, signal) {
+export async function summarizeTextStream({ text, summaryType, model } = {}, onChunk, signal) {
   let response;
   try {
+    const payload = {
+      text,
+      summary_type: summaryType
+    };
+    if (model) {
+      payload.model = model;
+    }
     response = await fetch('/api/summarize', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        text,
-        summary_type: summaryType
-      }),
+      body: JSON.stringify(payload),
       signal
     });
   } catch (err) {
@@ -104,14 +108,24 @@ export async function summarizeTextStream({ text, summaryType } = {}, onChunk, s
 }
 
 // テキスト要約API呼び出し (一括返却フォールバック)
-export async function summarizeText({ text, summaryType } = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+export async function summarizeText({ text, summaryType, model } = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await summarizeTextStream({ text, summaryType }, null, controller.signal);
+    return await summarizeTextStream({ text, summaryType, model }, null, controller.signal);
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+// 利用可能なOllamaモデル一覧取得API呼び出し
+export async function fetchModels(timeoutMs = 15000) {
+  const data = await requestJson(
+    '/api/models',
+    { method: 'GET' },
+    { timeoutMs, actionName: 'モデル一覧取得' }
+  );
+  return Array.isArray(data.models) ? data.models : [];
 }
 
 // 音声BlobのMIMEタイプから適切なファイル拡張子を判定
