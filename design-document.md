@@ -39,6 +39,7 @@
   - [x] Vue Routerによるマルチビュー（Home / History / About）
   - [x] MediaRecorderによる音声録音・タイマー
   - [x] 要約スタイル切り替え
+  - [x] 要約モデル選択UI
   - [x] LocalStorageによる履歴永続化
   - [x] ファイルダウンロード・印刷レイアウト
   - [x] 通知トースト
@@ -54,6 +55,9 @@
     - [x] Ollamaへのリクエストと結果受け取り
     - [x] 複数の要約スタイルでプロンプトを生成
     - [x] 要約をストリームで送る
+    - [x] 使用モデル指定パラメータ（`model`）対応
+  - [x] `/api/models`: 利用可能なOllamaモデル一覧取得
+  - [x] `/api/summary-types`: テキストファイル定義に基づく要約形式一覧取得
   - [x] `/api/submit`: 要約データ送信受付
     - [ ] `/api/submit`: SQLite等を用いた要約履歴のサーバーサイドでの永続化
 
@@ -196,9 +200,11 @@ GET /api/summary-jobs/{jobId}
 | --- | --------------------------- | ------------ | ---------------------------------- | ------------------------ | -------------- |
 | 1   | `/api/transcribe`           | POST         | 音声ファイルを文字起こしする       | 音声ファイル             | 文字起こし結果 |
 | (2) | `/api/summary-templates`    | GET          | 利用可能な要約形式を取得する       | なし                     | 要約形式一覧   |
-| 3   | `/api/summarize`            | POST         | 文字起こし結果を指定形式で要約する | 文字起こし結果・要約形式 | 要約結果       |
-| (4) | `/api/summary-jobs`         | POST         | 文字起こし～要約までを一括実行する | 音声ファイル・要約形式   | 処理結果       |
-| (5) | `/api/summary-jobs/{jobId}` | GET          | 処理状況・結果を取得する           | ジョブID                 | 処理状況・結果 |
+| 3   | `/api/summarize`            | POST         | 文字起こし結果を指定形式で要約する | 文字起こし結果・要約形式・モデル(任意) | 要約結果 (ストリーミング) |
+| 4   | `/api/models`               | GET          | 利用可能なOllamaモデル一覧を取得する | なし                   | モデル一覧     |
+| 5   | `/api/summary-types`        | GET          | 定義済みの要約形式一覧を取得する   | なし                     | 要約形式一覧   |
+| (6) | `/api/summary-jobs`         | POST         | 文字起こし～要約までを一括実行する | 音声ファイル・要約形式   | 処理結果       |
+| (7) | `/api/summary-jobs/{jobId}` | GET          | 処理状況・結果を取得する           | ジョブID                 | 処理状況・結果 |
 
 ### 1. `POST /api/transcribe`
 
@@ -289,9 +295,16 @@ GET /api/summary-jobs/{jobId}
 ```JSON
 {
   "text": "本日の会議では、新商品の開発スケジュールについて確認しました。",
-  "summary_type": "meeting"
+  "summary_type": "meeting",
+  "model": "qwen3.5:0.8b"
 }
 ```
+
+| パラメータ | 型 | 必須 | 内容 |
+|-----------|----|------|------|
+| text | String | 〇 | 要約対象のテキスト |
+| summary_type | String | 〇 | 要約形式（bullet, meeting, report, short等） |
+| model | String | △ | 使用するOllamaモデル名（省略時はデフォルトモデルを使用） |
 
 #### 実際の動作仕様 (ストリーミング)
 
@@ -413,3 +426,57 @@ GET /api/summary-jobs/{jobId}
   "completedAt": "2026-09-02T13:12:00+09:00"
 }
 ```
+
+### `GET /api/models`
+
+**Ollamaモデル一覧取得API**  
+→ローカルのOllamaインスタンスで現在利用可能なモデル一覧および詳細情報を取得する。
+
+#### 入力
+
+なし
+
+#### 出力
+
+```JSON
+{
+  "success": true,
+  "models": [
+    {
+      "model_name": "qwen3.5:0.8b",
+      "parameter_size": "0.8B",
+      "quantization_level": "Q4_K_M"
+    }
+  ]
+}
+```
+
+| フィールド | 型 | 内容 |
+|-----------|----|------|
+| model_name | String | Ollamaモデル識別子（例: `qwen3.5:0.8b`） |
+| parameter_size | String | モデルのパラメータ数（例: `0.8B`, `7B`） |
+| quantization_level | String | 量子化レベル（例: `Q4_K_M`） |
+
+### `GET /api/summary-types`
+
+**要約形式一覧取得API**  
+→`backend/prompts/` ディレクトリ内のテキストファイル（`*.txt`）に基づいて利用可能な要約形式キーの一覧を取得する。
+
+#### 入力
+
+なし
+
+#### 出力
+
+```JSON
+{
+  "success": true,
+  "summary_types": [
+    "bullet",
+    "meeting",
+    "report",
+    "short"
+  ]
+}
+```
+
