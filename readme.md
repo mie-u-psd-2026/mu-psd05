@@ -138,15 +138,19 @@ flowchart LR
     subgraph Backend["バックエンド (Flask :5000)"]
         API_T["/api/transcribe<br>(音声文字起こし)"]
         API_S["/api/summarize<br>(テキスト要約)"]
+        API_M["/api/models<br>(モデル一覧取得)"]
     end
 
     subgraph AI["ローカルLLM (Ollama :11434)"]
-        Model["qwen3.5:0.8b"]
+        Model["Ollamaモデル<br>(qwen3.5:0.8b 等)"]
+        Tags["/api/tags<br>(利用可能モデル情報)"]
     end
 
     UI -->|音声データ| API_T
-    UI -->|要約のリクエスト| API_S
-    API_S -->|"/api/generate"| Model
+    UI -->|"要約リクエスト<br>(スタイル・モデル指定)"| API_S
+    UI -->|モデル一覧リクエスト| API_M
+    API_M -->|"GET /api/tags"| Tags
+    API_S -->|"POST /api/generate"| Model
 ```
 
 # 📚開発の参考資料

@@ -19,6 +19,9 @@ async function loadJsonData(relativePath, fallback = []) {
   return fallback;
 }
 
+// デフォルトモデル定数
+const DEFAULT_MODEL = 'qwen3.5:0.8b';
+
 // アプリケーション全体の状態管理ストア
 const store = reactive({
   // 状態プロパティ
@@ -26,6 +29,9 @@ const store = reactive({
   resultText: '',
   selectedStyle: 'short',
   summaryStyles: [],
+  selectedModel: DEFAULT_MODEL,
+  models: [],
+  isLoadingModels: false,
   isSummarizing: false,
   isTranscribing: false,
   isRecording: false,
@@ -82,6 +88,60 @@ const store = reactive({
     } else if (this.summaryStyles.length > 0) {
       this.selectedStyle = this.summaryStyles[0].id;
     }
+
+    // Ollamaモデル一覧の非同期読み込み
+    await this.loadModels();
+  },
+
+  // モデル一覧読み込み
+  async loadModels() {
+    this.isLoadingModels = true;
+    try {
+      const fetchedModels = await api.fetchModels();
+      if (Array.isArray(fetchedModels) && fetchedModels.length > 0) {
+        this.models = fetchedModels;
+
+        const savedModel = storage.getSelectedModel();
+        if (savedModel && this.models.some(m => m.model_name === savedModel)) {
+          this.selectedModel = savedModel;
+        } else if (this.models.some(m => m.model_name === DEFAULT_MODEL)) {
+          this.selectedModel = DEFAULT_MODEL;
+          storage.saveSelectedModel(DEFAULT_MODEL);
+        } else {
+          this.selectedModel = this.models[0].model_name;
+          storage.saveSelectedModel(this.selectedModel);
+        }
+      } else {
+        // モデル一覧が空の場合のフォールバック
+        this.models = [{
+          model_name: DEFAULT_MODEL,
+          parameter_size: '',
+          quantization_level: ''
+        }];
+        this.selectedModel = DEFAULT_MODEL;
+        storage.saveSelectedModel(DEFAULT_MODEL);
+        this.showToast('利用可能なモデルが見つかりませんでした。デフォルトモデルを使用します', 'warning');
+      }
+    } catch (err) {
+      // 取得エラー時のフォールバック
+      this.models = [{
+        model_name: DEFAULT_MODEL,
+        parameter_size: '',
+        quantization_level: ''
+      }];
+      this.selectedModel = DEFAULT_MODEL;
+      storage.saveSelectedModel(DEFAULT_MODEL);
+      this.showToast('モデル一覧の取得に失敗しました。デフォルトモデルを使用します', 'warning');
+    } finally {
+      this.isLoadingModels = false;
+    }
+  },
+
+  // モデル選択と永続化
+  setSelectedModel(modelName) {
+    if (!modelName || typeof modelName !== 'string') return;
+    this.selectedModel = modelName;
+    storage.saveSelectedModel(modelName);
   },
 
   // サンプル文章の適用
@@ -258,6 +318,7 @@ const store = reactive({
   async executeSummarize() {
     const targetText = this.inputText.trim();
     const targetStyle = this.selectedStyle;
+    const targetModel = this.selectedModel;
 
     if (!targetText || this.isBusy) {
       return;
@@ -273,7 +334,8 @@ const store = reactive({
       const summary = await api.summarizeTextStream(
         {
           text: targetText,
-          summaryType: targetStyle
+          summaryType: targetStyle,
+          model: targetModel
         },
         (chunk) => {
           this.resultText += chunk;
@@ -284,7 +346,8 @@ const store = reactive({
       const item = storage.saveHistory({
         inputText: targetText,
         resultText: summary,
-        selectedStyle: targetStyle
+        selectedStyle: targetStyle,
+        model: targetModel
       });
 
       this.historyItems.unshift(item);
