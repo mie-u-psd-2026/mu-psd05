@@ -164,6 +164,46 @@
             <h5 class="mb-0 fw-semibold">要約スタイル</h5>
           </div>
           <div class="card-body overflow-y-auto">
+            <!-- モデル選択UI -->
+            <div class="mb-3">
+              <label class="form-label small text-body-secondary fw-semibold mb-1 d-flex justify-content-between align-items-center">
+                <span>モデル</span>
+                <span v-if="store.isLoadingModels" class="spinner-border spinner-border-sm text-secondary" role="status" aria-label="モデル読み込み中"></span>
+              </label>
+              <div class="dropdown">
+                <button
+                  class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-between align-items-center text-truncate py-2 px-3"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  :disabled="store.isSummarizing || store.isLoadingModels"
+                  :title="store.selectedModel"
+                >
+                  <span class="text-truncate fw-medium">{{ store.selectedModel }}</span>
+                  <i class="bi bi-chevron-down ms-1"></i>
+                </button>
+                <ul class="dropdown-menu w-100 shadow-sm py-1" style="max-height: 240px; overflow-y: auto;">
+                  <li v-for="model in store.models" :key="model.model_name">
+                    <button
+                      type="button"
+                      class="dropdown-item d-flex justify-content-between align-items-center py-2 px-3 text-wrap"
+                      :class="{ active: store.selectedModel === model.model_name }"
+                      @click="store.setSelectedModel(model.model_name)"
+                    >
+                      <span class="me-2">
+                        <span class="fw-medium">{{ model.model_name }}</span>
+                        <template v-if="model.parameter_size"> {{ model.parameter_size }}</template>
+                      </span>
+                      <span
+                        v-if="model.quantization_level"
+                        class="badge text-bg-light border"
+                      >{{ model.quantization_level }}</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <div class="list-group">
               <div
                 v-for="style in styles"
