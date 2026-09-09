@@ -62,7 +62,8 @@ def transcribe_audio(audio_file):
             temp_path,
             language="ja",
             beam_size=5,
-            condition_on_previous_text=True
+            condition_on_previous_text=True,
+            initial_prompt="こんにちは。それでは、始めましょう。"
         )
 
         # --------------------------------------------------
