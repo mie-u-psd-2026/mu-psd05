@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: 音声文字起こし・AI要約 Webアプリ API
+  description: |
+    音声の文字起こし（faster-whisper）およびローカルLLM（Ollama）を用いたテキスト要約を提供するFlaskバックエンドのAPI仕様書。
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: ローカル開発サーバー
+
+paths:
+  /api/transcribe:
+    post:
+      summary: 音声文字起こし
+      description: アップロードされた音声ファイルをfaster-whisperで文字起こしし、テキストとして返却します。
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - audio
+              properties:
+                audio:
+                  type: string
+                  format: binary
+                  description: 文字起こし対象の音声ファイル (wav, webm, mp3, m4a等)
+      responses:
+        '200':
+          description: 文字起こし成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - text
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  text:
+                    type: string
+                    description: 文字起こしされたテキスト
+                    example: 本日の会議の文字起こし結果です。
+        '400':
+          description: リクエスト不正（音声ファイルが指定されていない等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー（文字起こし処理中の例外等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/summarize:
+    post:
+      summary: テキスト要約（ストリーミング）
+      description: |
+        指定されたテキストを選択された要約形式でLLMに渡し、生成された要約テキストを逐次ストリーミング（チャンク転送）で返却します。
+        クライアント側でHTTP接続を切断（AbortController等）することで、ストリーミング受信を途中で中断可能です。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - summary_type
+              properties:
+                text:
+                  type: string
+                  description: 要約対象の文章
+                  example: 本日の会議では新製品の開発スケジュールについて議論しました。
+                summary_type:
+                  type: string
+                  description: 要約形式のキー（bullet, meeting, report, short等）
+                  example: meeting
+                model:
+                  type: string
+                  description: 使用するOllamaモデル名（省略時はバックエンドのデフォルトモデルを使用）
+                  example: qwen3.5:0.8b
+      responses:
+        '200':
+          description: 要約ストリーミング送信（チャンク転送）
+          headers:
+            X-Accel-Buffering:
+              schema:
+                type: string
+              description: プロキシによるバッファリングを防止するためのヘッダー (no)
+            Cache-Control:
+              schema:
+                type: string
+              description: キャッシュ無効化ヘッダー (no-cache)
+            Connection:
+              schema:
+                type: string
+              description: 接続維持ヘッダー (keep-alive)
+          content:
+            text/plain; charset=utf-8:
+              schema:
+                type: string
+                description: 生成された要約テキストの逐次チャンクデータ
+                example: |
+                  # 会議概要
+                  - 新製品開発スケジュールについての議論
+        '400':
+          description: リクエスト不正（必須パラメータ不足、無効な要約形式など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー（LLM呼び出し失敗など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/submit:
+    post:
+      summary: 要約データの送信
+      description: 確定した要約テキストをバックエンドに送信・登録します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - summary
+              properties:
+                summary:
+                  type: string
+                  description: 送信する要約テキスト
+                  example: 本日の会議要約です。
+      responses:
+        '200':
+          description: 送信完了
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 要約を送信しました
+        '400':
+          description: リクエスト不正（summaryフィールド不足等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/models:
+    get:
+      summary: 利用可能なOllamaモデル一覧取得
+      description: ローカルで稼働しているOllamaインスタンスから、利用可能なモデル一覧を取得します。
+      responses:
+        '200':
+          description: モデル一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - models
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  models:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OllamaModel'
+        '500':
+          description: サーバー内部エラー（Ollama未起動等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/summary-types:
+    get:
+      summary: 要約形式一覧取得
+      description: promptsディレクトリ内に定義されている要約プロンプト種別（ファイル名）の一覧を取得します。
+      responses:
+        '200':
+          description: 要約形式一覧取得成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - summary_types
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  summary_types:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - bullet
+                      - meeting
+                      - report
+                      - short
+        '500':
+          description: サーバー内部エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: 共通エラーレスポンス
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: エラーメッセージ
+          example: リクエストが不正です
+    OllamaModel:
+      type: object
+      description: Ollamaのモデル情報
+      required:
+        - model_name
+        - parameter_size
+        - quantization_level
+      properties:
+        model_name:
+          type: string
+          description: モデル名
+          example: qwen3.5:0.8b
+        parameter_size:
+          type: string
+          description: パラメータサイズ
+          example: 0.8B
+        quantization_level:
+          type: string
+          description: 量子化レベル
+          example: Q4_K_M
