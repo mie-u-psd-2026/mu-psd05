@@ -8,9 +8,15 @@ OtoMatomeは、生成AI（LLM）を活用した音声入力の要約・整理が
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?logo=bootstrap&logoColor=white)
 ![Ollama](https://img.shields.io/badge/Ollama-qwen3.5:0.8b-black?logo=ollama&logoColor=white)
 
-![](./images/screenshot1.jpeg)
+<p align="center">
+  <img
+    width="80%"
+    alt="メイン画面のスクリーンショット"
+    src="https://github.com/user-attachments/assets/4f8dda4b-fed0-4a80-b926-2be03ffc6e17"
+  />
+</p>
 
-## 📖ドキュメント
+# 📖ドキュメント
 
 - [仕様書（design-document.md）](./design-document.md): 機能要件・実装状況・入出力例・開発フロー・APIエンドポイント仕様
 - [画面設計（design-document-page.md）](./design-document-page.md): 画面遷移・UIワイヤーフレーム・状態遷移
@@ -49,6 +55,30 @@ python backend/app.py
 
 > [!CAUTION]  
 > 開発サーバは[本番環境で使わないで](https://flask.palletsprojects.com/en/stable/server/)ください。
+
+# 🎙️使用方法
+### 1. 要約対象を入力する
+要約する対象の文章を、入力テキストエリアに入力します。下部の「録音」ボタンを使って音声入力も可能です。  
+突然思いついた発想を録音してみましょう。    
+<img 
+  width="80%"
+  alt="入力画面を操作しているアニメーション" 
+  src="https://github.com/user-attachments/assets/0fc51d7e-705d-4e28-82ef-dba974d259aa" 
+/>  
+また、事前に録音したファイルを入力エリアにドラッグ&ドロップすれば、自動で文字起こしされます。  
+
+### 2. 要約スタイルを選択し、要約する
+入力エリア右の要約スタイルの一覧からスタイルを選びます。  
+入力エリア右下の「要約」ボタンで、AIによる要約が開始されます。  
+<img 
+  width="80%"
+  alt="実際に要約を行なっているアニメーション" 
+  src="https://github.com/user-attachments/assets/ef22abd6-c1c3-4350-bd2f-6e17ee03fd1f" 
+/>  
+完成した要約は、以下の形で保存できます：
+- クリップボードへのコピー  
+- テキストファイルでのダウンロード  
+- 印刷   
 
 # 📥環境構築
 
@@ -138,15 +168,19 @@ flowchart LR
     subgraph Backend["バックエンド (Flask :5000)"]
         API_T["/api/transcribe<br>(音声文字起こし)"]
         API_S["/api/summarize<br>(テキスト要約)"]
+        API_M["/api/models<br>(モデル一覧取得)"]
     end
 
     subgraph AI["ローカルLLM (Ollama :11434)"]
-        Model["qwen3.5:0.8b"]
+        Model["Ollamaモデル<br>(qwen3.5:0.8b 等)"]
+        Tags["/api/tags<br>(利用可能モデル情報)"]
     end
 
     UI -->|音声データ| API_T
-    UI -->|要約のリクエスト| API_S
-    API_S -->|"/api/generate"| Model
+    UI -->|"要約リクエスト<br>(スタイル・モデル指定)"| API_S
+    UI -->|モデル一覧リクエスト| API_M
+    API_M -->|"GET /api/tags"| Tags
+    API_S -->|"POST /api/generate"| Model
 ```
 
 # 📚開発の参考資料
