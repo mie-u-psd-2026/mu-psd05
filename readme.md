@@ -34,7 +34,7 @@ cd mu-psd05
 ## （Windows）
 start /b "" ollama serve >NUL 2>&1
 
-## バックグラウンドで起動する（Linux/macOS）
+## （Linux/macOS）
 ollama serve >/dev/null 2>&1 &
 
 # （初回のみ）使用モデル等のインストール
@@ -48,7 +48,7 @@ python backend/app.py
 [`http://localhost:5000/`](http://localhost:5000/)にアクセスすると、アプリが表示されます。
 
 > [!CAUTION]  
-> 開発サーバは[本番環境で使わないでください](https://flask.palletsprojects.com/en/stable/server/)。
+> 開発サーバは[本番環境で使わないで](https://flask.palletsprojects.com/en/stable/server/)ください。
 
 # 📥環境構築
 
@@ -82,7 +82,7 @@ brew install -y visual-studio-code python@3.13 opencode ollama
 ```
 
 > [!TIP]  
-> Pythonの管理にuvを使用する場合、`uv pin python 3.13`で特定のバージョンをインストールすることなくプロジェクトで使用するPythonバージョンを固定できます。
+> Pythonの管理にuvを使用する場合、`uv pin python 3.13`でプロジェクトで使用するPythonバージョンを固定できます。
 
 ## VSCode拡張機能
 
