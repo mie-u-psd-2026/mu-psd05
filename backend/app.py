@@ -1,3 +1,5 @@
+# app.py
+
 from pathlib import Path
 
 from flask import (
@@ -11,10 +13,15 @@ from flask import (
 )
 
 from services.transcription import transcribe_audio
+
 from services.summarization import (
     summarize_text,
-    summarize_text_stream
+    summarize_text_stream,
+    build_prompt,
+    get_summary_types
 )
+
+from services.ollama import get_models
 
 
 # ==========================================
@@ -22,6 +29,7 @@ from services.summarization import (
 # ==========================================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 FRONTEND_DIR = BASE_DIR / "frontend"
 
 
@@ -92,6 +100,9 @@ def summarize():
         # フロントエンドで選択された要約形式
         summary_type = data.get("summary_type")
 
+        # 使用するOllamaモデル
+        model = data.get("model")
+
         # textの確認
         if not text:
 
@@ -108,10 +119,13 @@ def summarize():
                 "error": "summary_typeがありません"
             }), 400
 
-        # 要約形式が正しいか確認
-        # ストリーミング開始前に確認する
-        from services.summarization import build_prompt
-
+        # ======================================
+        # 要約形式の確認
+        # ======================================
+        #
+        # ストリーミング開始前にbuild_prompt()
+        # を実行してエラーを確認する。
+        #
         build_prompt(
             text,
             summary_type
@@ -129,7 +143,8 @@ def summarize():
                 # 要約を少しずつ生成
                 for chunk in summarize_text_stream(
                     text,
-                    summary_type
+                    summary_type,
+                    model=model
                 ):
 
                     # 生成された文章を
@@ -138,7 +153,8 @@ def summarize():
 
             except Exception as e:
 
-                # ストリーミング途中でエラーが発生した場合
+                # ストリーミング途中で
+                # エラーが発生した場合
                 yield f"\n\n[ERROR] {str(e)}"
 
         return Response(
@@ -146,7 +162,9 @@ def summarize():
             status=200,
             mimetype="text/plain; charset=utf-8",
             headers={
-                # プロキシなどによるバッファリングを防ぐ
+
+                # プロキシなどによる
+                # バッファリングを防ぐ
                 "X-Accel-Buffering": "no",
 
                 # キャッシュさせない
@@ -213,6 +231,57 @@ def submit():
         return jsonify({
             "success": True,
             "message": "要約を送信しました"
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ==========================================
+# 4. Ollamaモデル一覧API
+# ==========================================
+
+@app.route("/api/models", methods=["GET"])
+def models():
+
+    try:
+
+        # Ollamaからモデル一覧を取得
+        models = get_models()
+
+        return jsonify({
+            "success": True,
+            "models": models
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ==========================================
+# 5. 要約形式一覧API
+# ==========================================
+
+@app.route("/api/summary-types", methods=["GET"])
+def summary_types():
+
+    try:
+
+        # promptsフォルダから
+        # 要約形式一覧を取得
+        types = get_summary_types()
+
+        return jsonify({
+            "success": True,
+            "summary_types": types
         }), 200
 
     except Exception as e:
