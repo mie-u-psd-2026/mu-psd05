@@ -37,10 +37,3 @@
 | Success | 削除時：リストから削除される<br>クリック時：要約ページに過去の要約内容がそのまま入力された状態で遷移                          |              |
 | Error   | トーストか通知で削除失敗の旨を表示                                                                                            |              |
 
-必要となるbackend用のコマンド
-
-```JSON
-pip install flask requests faster-whisper
-ollama pull qwen3.5:0.8b
-python app.py
-```
