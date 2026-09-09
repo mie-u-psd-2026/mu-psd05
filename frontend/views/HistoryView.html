@@ -1,9 +1,21 @@
 <div class="container-fluid p-0">
   <!-- 履歴一覧カード -->
-  <div class="card shadow-sm border">
+  <div class="card shadow-sm border overflow-hidden">
     <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
       <h5 class="mb-0 fw-semibold">要約履歴一覧</h5>
-      <span class="badge bg-body-secondary text-body">{{ store.historyItems.length }}件</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-body-secondary small">{{ store.historyItems.length }}件</span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger d-flex align-items-center"
+          :disabled="store.historyItems.length === 0 || isProcessing"
+          @click="openDeleteAllModal"
+          title="履歴をすべて削除"
+          aria-label="要約履歴をすべて削除"
+        >
+          <i class="bi bi-trash3 me-1"></i>すべて削除
+        </button>
+      </div>
     </div>
 
     <!-- 処理実行中の事前案内バナー -->
@@ -33,30 +45,26 @@
         >
           <button
             type="button"
-            class="flex-grow-1 me-3 overflow-hidden text-start bg-transparent border-0 p-0"
+            class="flex-grow-1 me-3 overflow-hidden text-start bg-transparent border-0 p-0 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2"
             :class="{ 'opacity-50': isProcessing }"
             :disabled="isProcessing"
             :aria-label="`履歴を復元: ${getStyleInfo(item.selectedStyle).name} (${formatDate(item.createdAt)})${isProcessing ? '（現在処理中のため選択不可）' : ''}`"
             @click="handleSelect(item)"
           >
-            <span class="d-flex align-items-center flex-wrap gap-2 mb-1">
-              <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-inline-flex align-items-center">
-                <i :class="getStyleInfo(item.selectedStyle).icon" class="me-1"></i>
-                {{ getStyleInfo(item.selectedStyle).name }}
-              </span>
-              <small class="text-body-secondary">{{ formatDate(item.createdAt) }}</small>
-            </span>
-            <span
-              class="d-block text-body small"
-              class="text-clamp-2"
-            >
+            <!-- 左側: 要約本文（2行省略） -->
+            <span class="text-body small text-clamp-2 flex-grow-1">
               {{ item.resultText || item.inputText || '（内容なし）' }}
             </span>
+
+            <!-- 右側（PC）/ 下側（スマホ）: メタ情報（日時 · スタイル） -->
+            <span class="text-body-secondary small text-nowrap flex-shrink-0">
+              {{ formatDate(item.createdAt) }} · {{ getStyleInfo(item.selectedStyle).name }}
+            </span>
           </button>
-          <div>
+          <div class="flex-shrink-0">
             <button
               type="button"
-              class="btn btn-sm btn-outline-danger ms-3"
+              class="btn btn-sm btn-outline-danger ms-2 ms-md-3"
               @click.stop="openDeleteModal(item)"
               title="削除"
               aria-label="この要約履歴を削除"
@@ -95,6 +103,34 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
           <button type="button" class="btn btn-danger" @click="confirmDelete">削除する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 一括削除確認モーダル -->
+  <div
+    class="modal fade"
+    ref="deleteAllModalRef"
+    tabindex="-1"
+    aria-labelledby="deleteAllModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteAllModalLabel">履歴を全て削除してよろしいですか？</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2 fw-semibold text-danger">この操作は取り消せません！</p>
+          <p class="text-body-secondary small mb-0">
+            {{ historyRangeText }}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+          <button type="button" class="btn btn-danger" @click="confirmDeleteAll">すべて削除する</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import store, { SUMMARY_STYLES } from '../store.js';
+import store from '../store.js';
 import * as download from '../services/download.js';
 import * as audio from '../services/audio.js';
 import * as visualizer from '../services/visualizer.js';
@@ -22,12 +22,15 @@ export default {
   data() {
     return {
       store,
-      styles: SUMMARY_STYLES,
       isDragging: false,
       viewMode: 'preview'
     };
   },
   computed: {
+    // 要約スタイル一覧（ストアからリアクティブに取得）
+    styles() {
+      return this.store.summaryStyles;
+    },
     // Markdown形式で要約結果をパース＆サニタイズ
     renderedMarkdown() {
       if (!this.store.resultText) return '';
@@ -165,7 +168,10 @@ export default {
       if (isRecording) {
         this.$nextTick(() => {
           if (this.store.isRecording && this.$refs.waveformCanvas) {
-            visualizer.startVisualizer(this.$refs.waveformCanvas, audio.getActiveStream());
+            const stream = audio.getActiveStream();
+            if (stream) {
+              visualizer.startVisualizer(this.$refs.waveformCanvas, stream);
+            }
           }
         });
       } else {

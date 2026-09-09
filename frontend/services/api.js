@@ -31,11 +31,11 @@ async function requestJson(url, options = {}, { timeoutMs = DEFAULT_TIMEOUT_MS, 
   return data;
 }
 
-// テキスト要約API呼び出し
-export async function summarizeText({ text, summaryType } = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
-  const data = await requestJson(
-    '/api/summarize',
-    {
+// テキスト要約API呼び出し (ストリーミング対応)
+export async function summarizeTextStream({ text, summaryType } = {}, onChunk, signal) {
+  let response;
+  try {
+    response = await fetch('/api/summarize', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -43,12 +43,75 @@ export async function summarizeText({ text, summaryType } = {}, timeoutMs = DEFA
       body: JSON.stringify({
         text,
         summary_type: summaryType
-      })
-    },
-    { timeoutMs, actionName: '要約処理' }
-  );
+      }),
+      signal
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('要約を中断しました');
+    }
+    throw new Error(`通信エラーが発生しました: ${err.message}`);
+  }
 
-  return data.summary;
+  if (!response.ok) {
+    let errorMsg = `要約に失敗しました (ステータス: ${response.status})`;
+    try {
+      const errorJson = await response.json();
+      if (errorJson && errorJson.error) {
+        errorMsg = errorJson.error;
+      }
+    } catch (_) {}
+    throw new Error(errorMsg);
+  }
+
+  if (!response.body) {
+    throw new Error('ストリーミングレスポンスが取得できませんでした');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let fullText = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      fullText += chunk;
+
+      if (chunk.includes('[ERROR]')) {
+        const errMatch = chunk.match(/\[ERROR\]\s*(.+)/);
+        throw new Error(errMatch ? errMatch[1] : '要約生成中にエラーが発生しました');
+      }
+
+      if (typeof onChunk === 'function') {
+        onChunk(chunk, fullText);
+      }
+    }
+  } catch (readErr) {
+    if (signal?.aborted || readErr.name === 'AbortError' || readErr.message?.includes('aborted')) {
+      throw new Error('要約を中断しました');
+    }
+    throw readErr;
+  } finally {
+    reader.releaseLock();
+  }
+
+  return fullText;
+}
+
+// テキスト要約API呼び出し (一括返却フォールバック)
+export async function summarizeText({ text, summaryType } = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await summarizeTextStream({ text, summaryType }, null, controller.signal);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // 音声BlobのMIMEタイプから適切なファイル拡張子を判定

@@ -81,9 +81,11 @@
                   type="button"
                   class="btn btn-outline-danger btn-sm d-flex align-items-center"
                   @click="store.startRecording()"
-                  :disabled="store.isSummarizing || store.isTranscribing"
+                  :disabled="store.isBusy"
                 >
-                  <i class="bi bi-record-circle me-1"></i>録音
+                  <span v-if="store.isRequestingMic" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  <i v-else class="bi bi-record-circle me-1"></i>
+                  <span>{{ store.isRequestingMic ? 'マイク確認中...' : '録音' }}</span>
                 </button>
                 <template v-else>
                   <button
@@ -106,7 +108,7 @@
                   type="button"
                   class="btn btn-outline-secondary btn-sm d-flex align-items-center ms-2"
                   @click="$refs.audioFileInput.click()"
-                  :disabled="store.isSummarizing || store.isTranscribing"
+                  :disabled="store.isBusy"
                   aria-label="音声ファイルを選択して文字起こし"
                   title="音声ファイルから文字起こし"
                 >
@@ -131,14 +133,23 @@
               </div>
             </div>
             <button
+              v-if="store.isSummarizing"
+              type="button"
+              class="btn btn-outline-danger px-3 fw-semibold d-flex align-items-center"
+              @click="store.cancelSummarize()"
+              title="要約生成を中断"
+            >
+              <i class="bi bi-stop-circle me-1" aria-hidden="true"></i>
+              <span>中断</span>
+            </button>
+            <button
+              v-else
               type="button"
               class="btn btn-primary px-4 fw-semibold d-flex align-items-center"
               :disabled="!store.inputText.trim() || store.isBusy"
               @click="store.executeSummarize()"
             >
-              <span v-if="store.isSummarizing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              <span v-if="store.isSummarizing">要約中...</span>
-              <span v-else><i class="bi bi-send me-1"></i>要約</span>
+              <i class="bi bi-send me-1"></i>要約
             </button>
           </div>
         </div>
@@ -147,38 +158,41 @@
 
     <!-- 右上 要約スタイル選択エリア (col-12 col-lg-4) -->
     <div class="col-12 col-lg-4 d-print-none">
-      <div class="card h-100 shadow-sm border">
-        <div class="card-header bg-transparent py-3">
-          <h5 class="mb-0 fw-semibold">要約スタイル</h5>
-        </div>
-        <div class="card-body">
-          <div class="list-group">
-            <div
-              v-for="style in styles"
-              :key="style.id"
-              class="list-group-item d-flex justify-content-between align-items-center p-0"
-              :class="{ active: store.selectedStyle === style.id }"
-            >
-              <button
-                type="button"
-                class="btn border-0 text-start d-flex align-items-center flex-grow-1 py-3 ps-3 pe-2 bg-transparent text-reset text-decoration-none shadow-none"
-                :disabled="store.isSummarizing"
-                @click="store.setSelectedStyle(style.id)"
+      <div class="h-100 position-relative">
+        <div class="card h-100 shadow-sm border position-lg-absolute top-0 start-0 w-100">
+          <div class="card-header bg-transparent py-3">
+            <h5 class="mb-0 fw-semibold">要約スタイル</h5>
+          </div>
+          <div class="card-body overflow-y-auto">
+            <div class="list-group">
+              <div
+                v-for="style in styles"
+                :key="style.id"
+                class="list-group-item d-flex justify-content-between align-items-center p-0"
+                :class="{ active: store.selectedStyle === style.id }"
               >
-                <i :class="style.icon" class="fs-5 me-2"></i>
-                <span class="fw-medium">{{ style.name }}</span>
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm p-1 me-3 text-body-secondary"
-                :class="{ 'text-body': store.selectedStyle === style.id }"
-                v-popover
-                :data-bs-content="style.desc"
-                title="スタイル詳細"
-                aria-label="スタイル詳細"
-              >
-                <i class="bi bi-info-circle"></i>
-              </button>
+                <button
+                  type="button"
+                  class="btn border-0 text-start d-flex align-items-center flex-grow-1 py-3 ps-3 pe-2 bg-transparent text-reset text-decoration-none shadow-none"
+                  :disabled="store.isSummarizing"
+                  @click="store.setSelectedStyle(style.id)"
+                >
+                  <i :class="style.icon" class="fs-5 me-2"></i>
+                  <span class="fw-medium">{{ style.name }}</span>
+                </button>
+                <a
+                  tabindex="0"
+                  role="button"
+                  class="btn btn-sm p-1 me-3 text-body-secondary"
+                  :class="{ 'text-reset': store.selectedStyle === style.id }"
+                  v-popover
+                  data-bs-title="スタイル詳細"
+                  :data-bs-content="style.desc"
+                  aria-label="スタイル詳細"
+                >
+                  <i class="bi bi-info-circle"></i>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -189,7 +203,15 @@
     <div class="col-12">
       <div class="card shadow-sm border">
         <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-3">
-          <h5 class="mb-0 fw-semibold">要約結果</h5>
+          <div class="d-flex align-items-center">
+            <h5 class="mb-0 fw-semibold">要約結果</h5>
+            <span
+              v-if="store.isSummarizing"
+              class="spinner-border spinner-border-sm text-primary ms-2"
+              role="status"
+              aria-label="生成中"
+            ></span>
+          </div>
           <div class="d-flex align-items-center gap-2 d-print-none">
             <!-- 表示形式切り替えボタングループ -->
             <div class="btn-group btn-group-sm me-2" role="group" aria-label="表示形式切り替え">
@@ -257,6 +279,14 @@
         <div class="card-body">
           <div v-if="store.errorMessage" class="alert alert-danger mb-0" role="alert">
             {{ store.errorMessage }}
+          </div>
+          <div
+            v-else-if="store.isSummarizing && !store.resultText"
+            class="p-4 rounded bg-body-tertiary border d-flex align-items-center justify-content-center text-body-secondary"
+            style="min-height: 140px;"
+          >
+            <span class="spinner-border spinner-border-sm me-2 text-primary" role="status" aria-hidden="true"></span>
+            <span>バックエンドの応答を待っています……</span>
           </div>
           <div
             v-else-if="viewMode === 'preview' && store.resultText"
