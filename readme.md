@@ -44,7 +44,7 @@ start /b "" ollama serve >NUL 2>&1
 ollama serve >/dev/null 2>&1 &
 
 # （初回のみ）使用モデル等のインストール
-ollama pull qwen3.5:0.8b
+ollama pull qwen3.5:0.8b #Tip: 実用的にはGemma4:e2bなどが良いでしょう
 pip install -r backend/requirements.txt # uvやvenvを使用しても良い
 
 # 3. 開発サーバの開始
@@ -57,17 +57,20 @@ python backend/app.py
 > 開発サーバは[本番環境で使わないで](https://flask.palletsprojects.com/en/stable/server/)ください。
 
 # 🎙️使用方法
+
 ### 1. 要約対象を入力する
+
 要約する対象の文章を、入力テキストエリアに入力します。下部の「録音」ボタンを使って音声入力も可能です。  
-突然思いついた発想を録音してみましょう。    
+突然思いついた発想を録音してみましょう。  
 <img 
   width="80%"
   alt="入力画面を操作しているアニメーション" 
   src="https://github.com/user-attachments/assets/0fc51d7e-705d-4e28-82ef-dba974d259aa" 
 />  
-また、事前に録音したファイルを入力エリアにドラッグ&ドロップすれば、自動で文字起こしされます。  
+また、事前に録音したファイルを入力エリアにドラッグ&ドロップすれば、自動で文字起こしされます。
 
 ### 2. 要約スタイルを選択し、要約する
+
 入力エリア右の要約スタイルの一覧からスタイルを選びます。  
 入力エリア右下の「要約」ボタンで、AIによる要約が開始されます。  
 <img 
@@ -76,9 +79,10 @@ python backend/app.py
   src="https://github.com/user-attachments/assets/ef22abd6-c1c3-4350-bd2f-6e17ee03fd1f" 
 />  
 完成した要約は、以下の形で保存できます：
-- クリップボードへのコピー  
-- テキストファイルでのダウンロード  
-- 印刷   
+
+- クリップボードへのコピー
+- テキストファイルでのダウンロード
+- 印刷
 
 # 📥環境構築
 
@@ -135,8 +139,19 @@ pip install -r requirements.txt
 - `ollama serve`コマンドでOllamaを起動中に、別のターミナルで次のコマンドを実行してモデルを追加します。
 
 ```sh
+# 軽量・動作確認用（Try this first)
 ollama pull qwen3.5:0.8b
+
+# より実用的には（7GB強あります)
+ollama pull gemma4:e2b
+# またはVRAMに余裕があれば、実効4Bモデルも良いでしょう
+ollama pull gemma4:e4b
 ```
+
+> [!TIP]
+> **モデルについて**  
+> 実用的な動作には 3B 4bit量子化 以上のモデルが必要なようです。[Apple Foundation Model](https://machinelearning.apple.com/research/apple-foundation-models-2025-updates)も3B 2bitなので、妥当ではないかと思います。  
+> この点でGemma4 実効2~4Bは良い選択肢です。
 
 - モデルを削除するには次のようにします。
 
