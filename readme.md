@@ -169,7 +169,7 @@ deleted 'qwen3.5:4b-q4_K_M'
 > [!TIP]  
 > モデルは一つで1GB〜15GB程度の容量を使用します。必要がなくなったら削除すべきでしょう。
 
-# 🏗️ アーキテクチャ構成
+# 🏗️ システム構成
 
 - フロントエンド: Vue.jsとBootstrapのCDN版を用いています。
 - バックエンド: Python, Flask, faster-whisperを用いています。Ollama APIを使ってローカル起動のOllamaを叩いています。
@@ -177,25 +177,25 @@ deleted 'qwen3.5:4b-q4_K_M'
 ```mermaid
 flowchart LR
     subgraph Client["フロントエンド (Vue 3)"]
-        UI["録音 / 要約 / 履歴UI"]
+        UI["UI: 録音 / 要約 / 履歴"]
     end
 
     subgraph Backend["バックエンド (Flask :5000)"]
-        API_T["/api/transcribe<br>(音声文字起こし)"]
-        API_S["/api/summarize<br>(テキスト要約)"]
-        API_M["/api/models<br>(モデル一覧取得)"]
+        API_T["/api/transcribe<br>[文字起こし]<br>(faster-whisper)"]
+        API_S["/api/summarize<br>[要約]"]
+        API_M["/api/models<br>[モデル一覧]"]
     end
 
     subgraph AI["ローカルLLM (Ollama :11434)"]
-        Model["Ollamaモデル<br>(qwen3.5:0.8b 等)"]
-        Tags["/api/tags<br>(利用可能モデル情報)"]
+        Model["/api/generate<br>[文章生成]<br>(言語モデル)"]
+        Tags["/api/tags<br>[モデル一覧]"]
     end
 
     UI -->|音声データ| API_T
-    UI -->|"要約リクエスト<br>(スタイル・モデル指定)"| API_S
-    UI -->|モデル一覧リクエスト| API_M
-    API_M -->|"GET /api/tags"| Tags
-    API_S -->|"POST /api/generate"| Model
+    UI -->|"要約のリクエスト"| API_S
+    UI -->|モデル一覧取得| API_M
+    API_S -->|"文章生成リクエスト"| Model
+    API_M -->|"モデル一覧のリクエスト"| Tags
 ```
 
 # 📚開発の参考資料
