@@ -172,32 +172,40 @@
               </label>
               <div class="dropdown">
                 <button
-                  class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-between align-items-center text-truncate py-2 px-3"
+                  class="btn btn-outline-secondary btn-sm w-100 d-flex justify-content-between align-items-center py-2 px-3 text-start text-wrap"
                   type="button"
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                   :disabled="store.isSummarizing || store.isLoadingModels"
                   :title="store.selectedModel"
                 >
-                  <span class="text-truncate fw-medium">{{ store.selectedModel }}</span>
-                  <i class="bi bi-chevron-down ms-1"></i>
+                  <span class="fw-medium text-break me-2">{{ store.selectedModel }}</span>
+                  <i class="bi bi-chevron-down ms-auto flex-shrink-0"></i>
                 </button>
-                <ul class="dropdown-menu w-100 shadow-sm py-1" style="max-height: 240px; overflow-y: auto;">
+                <ul class="dropdown-menu w-100 shadow-sm py-1" style="max-height: 240px; overflow-y: auto; max-width: 100%; word-break: break-word;">
                   <li v-for="model in store.models" :key="model.model_name">
                     <button
                       type="button"
-                      class="dropdown-item d-flex justify-content-between align-items-center py-2 px-3 text-wrap"
+                      class="dropdown-item d-flex flex-wrap align-items-center justify-content-between py-2 px-3 text-wrap gap-1"
                       :class="{ active: store.selectedModel === model.model_name }"
                       @click="store.setSelectedModel(model.model_name)"
                     >
-                      <span class="me-2">
-                        <span class="fw-medium">{{ model.model_name }}</span>
-                        <template v-if="model.parameter_size"> {{ model.parameter_size }}</template>
-                      </span>
                       <span
-                        v-if="model.quantization_level"
-                        class="badge text-bg-light border"
-                      >{{ model.quantization_level }}</span>
+                        class="fw-medium text-break text-start"
+                        style="flex: 1 1 120px; min-width: 120px;"
+                      >{{ model.model_name }}</span>
+                      <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <span
+                          v-if="model.parameter_size"
+                          class="text-body-tertiary small"
+                          :class="{ 'text-white-50': store.selectedModel === model.model_name }"
+                          style="color: var(--bs-tertiary-color);"
+                        >{{ model.parameter_size }}</span>
+                        <span
+                          v-if="model.quantization_level"
+                          class="badge text-bg-light border font-monospace"
+                        >{{ model.quantization_level }}</span>
+                      </div>
                     </button>
                   </li>
                 </ul>
