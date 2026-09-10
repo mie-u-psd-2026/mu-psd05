@@ -1,0 +1,9 @@
+:80 {
+    root * /srv/frontend
+    file_server
+
+    # SSEストリーミングを即座に中継するためflush_intervalを無効化
+    reverse_proxy /api/* backend:5000 {
+        flush_interval -1
+    }
+}
