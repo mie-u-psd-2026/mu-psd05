@@ -3,6 +3,7 @@
 export const SESSION_STATE_KEY = 'summarizer_session_state';
 export const HISTORY_KEY = 'summarizer_history';
 export const STYLE_KEY = 'summarizer_style';
+export const MODEL_KEY = 'summarizer_model';
 
 // 件数上限定数
 export const MAX_HISTORY_ITEMS = 100; // 最大100件
@@ -77,13 +78,14 @@ function writeHistoryRecord(record) {
 }
 
 // 履歴保存
-export function saveHistory({ inputText, resultText, selectedStyle }) {
+export function saveHistory({ inputText, resultText, selectedStyle, model }) {
   const record = readHistoryRecord();
   const newItem = {
     id: generateId(),
     inputText: inputText || '',
     resultText: resultText || '',
     selectedStyle: selectedStyle || 'short',
+    model: model || '',
     createdAt: Date.now()
   };
 
@@ -137,6 +139,33 @@ export function getSelectedStyle() {
     return parsed.styleId;
   } catch (error) {
     console.error('要約スタイルの取得に失敗しました:', error);
+    return null;
+  }
+}
+
+// 選択モデル保存
+export function saveSelectedModel(modelName) {
+  try {
+    const data = {
+      modelName
+    };
+    localStorage.setItem(MODEL_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('選択モデルの保存に失敗しました:', error);
+  }
+}
+
+// 選択モデル取得
+export function getSelectedModel() {
+  try {
+    const raw = localStorage.getItem(MODEL_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.modelName !== 'string') return null;
+
+    return parsed.modelName;
+  } catch (error) {
+    console.error('選択モデルの取得に失敗しました:', error);
     return null;
   }
 }
