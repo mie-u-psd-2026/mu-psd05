@@ -1,0 +1,37 @@
+services:
+  otomatome:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      # 公開ポート
+      - "35000:80"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./frontend:/srv/frontend:ro
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - whisper_cache:/root/.cache/huggingface
+    depends_on:
+      - ollama
+
+  # Ollamaが起動後、
+  # docker compose exec ollama ollama pull qwen3.5:0.8b
+  # でモデルを追加してください。
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+
+volumes:
+  whisper_cache:
+  ollama_models:
