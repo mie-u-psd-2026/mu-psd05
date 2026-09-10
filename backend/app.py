@@ -8,6 +8,7 @@ from flask import (
     jsonify,
     redirect,
     url_for,
+    send_from_directory,
     Response,
     stream_with_context
 )
@@ -304,6 +305,20 @@ def index():
             "static",
             filename="index.html"
         )
+    )
+
+
+# ==========================================
+# `/favicon.ico`: faviconをassets/icon.svgから配信する
+# ==========================================
+
+@app.route("/favicon.ico")
+def favicon():
+
+    return send_from_directory(
+        FRONTEND_DIR / "assets",
+        "icon.svg",
+        mimetype="image/svg+xml"
     )
 
 
