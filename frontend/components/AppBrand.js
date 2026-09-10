@@ -19,7 +19,7 @@ export default {
   },
   template: `
     <span class="d-inline-flex align-items-center fw-bold">
-      <i class="bi bi-journal-arrow-down text-success me-2" :class="iconSize"></i>
+      <img src="assets/icon.svg" alt="" aria-hidden="true" class="me-2" style="width: 32px; height: 32px; object-fit: contain; flex-shrink: 0;">
       <span :class="textSize">{{ appName }}</span>
     </span>
   `
